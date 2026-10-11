@@ -1,0 +1,70 @@
+---
+import Base from '../layouts/Base.astro';
+---
+
+<Base title="Method & sources · Your Body, Now" description="How the curves and copy on Your Body, Now were made, and where the science comes from.">
+  <main class="doc">
+    <a class="back" href="/">← Back to the clock</a>
+    <h1>Method &amp; sources</h1>
+
+    <h2>What the curves show</h2>
+    <p>
+      The four lines (alertness, core body temperature, cortisol and melatonin) are stylised shapes, drawn to show
+      <em>when</em> each one rises and falls across a typical day. They are relative, not measured values, and assume an
+      adult who sleeps roughly from 23:00 to 07:00.
+    </p>
+
+    <h2>Your clock is your own</h2>
+    <p>
+      Chronotype shifts these patterns. Early birds run an hour or two ahead, night owls an hour or two behind, and
+      teenagers tend to run later still. Shift work, jet lag and light at night all move the clock too.
+    </p>
+
+    <h2>Not medical advice</h2>
+    <p>
+      This site explains general physiology. If you struggle with sleep or energy, talk to a doctor or a sleep
+      specialist.
+    </p>
+
+    <h2>Sources</h2>
+    <p>The full reference list is being compiled and will appear here before launch.</p>
+  </main>
+</Base>
+
+<style>
+  :global(body) {
+    background: #0b1026;
+    color: #f2f1fb;
+  }
+
+  .doc {
+    max-width: 65ch;
+    margin: 0 auto;
+    padding: var(--space-6) var(--space-3) var(--space-7);
+  }
+
+  .back {
+    font-size: var(--text-sm);
+  }
+
+  h1 {
+    font-family: var(--font-display);
+    font-size: clamp(2.5rem, 1.5rem + 4vw, 4.5rem);
+    font-weight: 300;
+    letter-spacing: -0.03em;
+    line-height: 1;
+    margin: var(--space-5) 0 var(--space-6);
+  }
+
+  h2 {
+    font-family: var(--font-display);
+    font-size: var(--text-lg);
+    font-weight: 600;
+    margin: var(--space-5) 0 var(--space-2);
+  }
+
+  p {
+    margin: 0;
+    color: #c9c8e0;
+  }
+</style>

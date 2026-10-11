@@ -1,0 +1,139 @@
+---
+import { CURVES, sampleCurve, type CurveId } from '../lib/circadian';
+
+// Drawn once at build time; only the playhead moves at runtime.
+const W = 1440;
+const H = 100;
+const y = (v: number) => H - 6 - v * (H - 14);
+
+const STYLE: Record<CurveId, string> = {
+  alertness: 'curve--alertness',
+  temperature: 'curve--temperature',
+  cortisol: 'curve--cortisol',
+  melatonin: 'curve--melatonin',
+};
+
+const paths = CURVES.map((c) => ({
+  ...c,
+  className: STYLE[c.id],
+  d: sampleCurve(c.id, 10)
+    .map(([m, v], i) => `${i ? 'L' : 'M'}${m},${y(v).toFixed(1)}`)
+    .join(' '),
+}));
+---
+
+<figure class="curves" data-curves>
+  <figcaption class="curves__legend">
+    <ul>
+      {
+        paths.map((p) => (
+          <li>
+            <svg class="curves__swatch" viewBox="0 0 24 8" aria-hidden="true">
+              <line class:list={['curve', p.className]} x1="0" y1="4" x2="24" y2="4" />
+            </svg>
+            <span>{p.label}</span>
+            <span class="curves__trend" data-trend={p.id}>–</span>
+          </li>
+        ))
+      }
+    </ul>
+    <p class="curves__note">
+      Typical rhythm for someone who sleeps around 23:00–07:00. Relative, not measured.
+    </p>
+  </figcaption>
+
+  <div class="curves__plot">
+    <svg viewBox={`0 0 ${W} ${H}`} preserveAspectRatio="none" aria-hidden="true">
+      {paths.map((p) => <path class:list={['curve', p.className]} d={p.d} vector-effect="non-scaling-stroke" />)}
+      <line class="curves__playhead" x1="0" y1="0" x2="0" y2={H} vector-effect="non-scaling-stroke" data-playhead />
+    </svg>
+    <div class="curves__axis" aria-hidden="true">
+      <span>00</span><span>06</span><span>12</span><span>18</span><span>24</span>
+    </div>
+  </div>
+</figure>
+
+<style>
+  .curves {
+    margin: 0;
+    display: grid;
+    gap: var(--space-3);
+  }
+
+  .curves__legend ul {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-2) var(--space-5);
+    font-size: var(--text-sm);
+  }
+
+  .curves__legend li {
+    display: flex;
+    align-items: center;
+    gap: var(--space-2);
+  }
+
+  .curves__swatch {
+    width: 24px;
+    height: 8px;
+    overflow: visible;
+  }
+
+  .curves__trend {
+    color: var(--ink-muted);
+  }
+
+  .curves__note {
+    margin: var(--space-2) 0 0;
+    font-size: var(--text-sm);
+    color: var(--ink-muted);
+  }
+
+  .curves__plot svg {
+    display: block;
+    width: 100%;
+    height: clamp(64px, 10vw, 110px);
+    overflow: visible;
+  }
+
+  .curve {
+    fill: none;
+    stroke: var(--ink);
+    stroke-width: 1.5;
+    stroke-linecap: round;
+  }
+
+  /* Distinguished by line style as well as weight, never by colour alone. */
+  .curve--alertness {
+    stroke: var(--accent);
+    stroke-width: 3;
+  }
+  .curve--temperature {
+    stroke-dasharray: 8 6;
+  }
+  .curve--cortisol {
+    stroke-opacity: 0.75;
+  }
+  .curve--melatonin {
+    stroke-dasharray: 1 5;
+    stroke-width: 2.5;
+  }
+
+  .curves__playhead {
+    stroke: var(--ink);
+    stroke-width: 1;
+    stroke-opacity: 0.5;
+  }
+
+  .curves__axis {
+    display: flex;
+    justify-content: space-between;
+    margin-top: var(--space-2);
+    font-size: var(--text-sm);
+    font-variant-numeric: tabular-nums;
+    color: var(--ink-muted);
+  }
+</style>

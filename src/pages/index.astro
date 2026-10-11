@@ -1,0 +1,309 @@
+---
+import Base from '../layouts/Base.astro';
+import Dial from '../components/Dial.astro';
+import Curves from '../components/Curves.astro';
+import { PHASES } from '../content/phases';
+
+// Server-render the first phase so the page reads fine before (or without) JS.
+const first = PHASES[0];
+---
+
+<Base
+  title="Your Body, Now"
+  description="What your body is doing at this very hour, and what you can do with it. An interactive 24-hour journey through your inner clock."
+>
+  <canvas class="sky" data-sky aria-hidden="true"></canvas>
+
+  <div class="page">
+    <header class="top">
+      <a class="brand" href="/" aria-label="Your Body, Now: home">
+        <span class="brand__mark" aria-hidden="true"></span>
+        Your Body, Now
+      </a>
+
+      <div class="status">
+        <span class="status__label" data-status>
+          <span class="status__dot" aria-hidden="true"></span>
+          <span data-status-text>Live</span>
+        </span>
+        <button class="status__now" type="button" data-now hidden>Back to now</button>
+      </div>
+    </header>
+
+    <main class="stage">
+      <section class="story" aria-labelledby="phase-name">
+        <p class="story__lead" data-lead>It’s 00:00. Your body is in</p>
+        <h1 class="story__name" id="phase-name" data-phase-name>{first.name}</h1>
+        <div class="story__copy" data-phase-copy>
+          <p class="story__headline" data-phase-headline>{first.headline}</p>
+          <p class="story__body" data-phase-body>{first.body}</p>
+          <p class="story__tip">
+            <span class="story__tip-label">Try this</span>
+            <span data-phase-tip>{first.tip}</span>
+          </p>
+        </div>
+      </section>
+
+      <section class="clock" aria-label="Choose a time">
+        <Dial />
+        <form class="jump" data-jump>
+          <label for="jump-time">Jump to</label>
+          <input id="jump-time" type="time" step="60" required data-jump-input />
+          <button type="submit">Go</button>
+        </form>
+      </section>
+    </main>
+
+    <section class="rhythm" aria-label="Your daily rhythm">
+      <Curves />
+    </section>
+
+    <footer class="foot">
+      <p>Times are typical for an adult. Your own clock may run earlier or later.</p>
+      <a href="/sources/">Method &amp; sources</a>
+    </footer>
+  </div>
+
+  <p class="visually-hidden" aria-live="polite" data-announce></p>
+</Base>
+
+<script>
+  import { start } from '../scripts/app';
+  start();
+</script>
+
+<style>
+  .sky {
+    position: fixed;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    z-index: 0;
+    /* Fallback when WebGL is unavailable: the same palette, as a gradient. */
+    background:
+      radial-gradient(60% 60% at 72% 45%, var(--glow), transparent 70%),
+      var(--bg);
+  }
+
+  .page {
+    position: relative;
+    z-index: 1;
+    min-height: 100svh;
+    display: grid;
+    grid-template-rows: auto 1fr auto auto;
+    gap: var(--space-6);
+    padding: var(--space-4) var(--space-3) var(--space-5);
+    max-width: 1440px;
+    margin: 0 auto;
+    color: var(--ink);
+  }
+
+  .top {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: var(--space-3);
+  }
+
+  .brand {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--space-2);
+    font-family: var(--font-display);
+    font-weight: 600;
+    text-decoration: none;
+    letter-spacing: -0.01em;
+    white-space: nowrap;
+  }
+
+  .brand__mark {
+    width: 14px;
+    height: 14px;
+    border-radius: 50%;
+    border: 2px solid var(--ink);
+    border-top-color: var(--accent);
+    border-right-color: var(--accent);
+  }
+
+  .status {
+    display: flex;
+    align-items: center;
+    gap: var(--space-2);
+    font-size: var(--text-sm);
+  }
+
+  .status__label {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--space-2);
+    padding: 6px 12px;
+    border-radius: 999px;
+    background: color-mix(in oklab, var(--ink) 8%, transparent);
+    font-variant-numeric: tabular-nums;
+    white-space: nowrap;
+  }
+
+  /* On small screens, "Back to now" says enough while exploring. */
+  @media (max-width: 479px) {
+    :global([data-live='false']) .status__label {
+      display: none;
+    }
+  }
+
+  .status__dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: var(--ink-muted);
+  }
+
+  :global([data-live='true']) .status__dot {
+    background: var(--accent);
+    animation: pulse 2.4s var(--ease-in-out) infinite;
+  }
+
+  @keyframes pulse {
+    0%,
+    100% {
+      box-shadow: 0 0 0 0 color-mix(in oklab, var(--accent) 60%, transparent);
+    }
+    50% {
+      box-shadow: 0 0 0 6px transparent;
+    }
+  }
+
+  .status__now,
+  .jump button {
+    font: inherit;
+    font-size: var(--text-sm);
+    font-weight: 600;
+    color: var(--bg);
+    background: var(--ink);
+    border: 0;
+    border-radius: 999px;
+    padding: 8px 16px;
+    min-height: 36px;
+    white-space: nowrap;
+    cursor: pointer;
+    transition: transform var(--duration-micro) var(--ease-out);
+  }
+
+  .status__now:hover,
+  .jump button:hover {
+    transform: translateY(-1px);
+  }
+
+  .stage {
+    display: grid;
+    gap: var(--space-6);
+    align-items: center;
+  }
+
+  .story {
+    max-width: 40rem;
+  }
+
+  .story__lead {
+    margin: 0 0 var(--space-2);
+    font-size: var(--text-lg);
+    color: var(--ink-muted);
+    font-variant-numeric: tabular-nums;
+  }
+
+  .story__name {
+    margin: 0;
+    font-family: var(--font-display);
+    font-size: var(--text-display);
+    font-weight: var(--display-wght);
+    font-stretch: var(--display-wdth);
+    line-height: 0.92;
+    letter-spacing: -0.035em;
+  }
+
+  .story__copy {
+    margin-top: var(--space-5);
+    display: grid;
+    gap: var(--space-3);
+    max-width: 34rem;
+  }
+
+  .story__copy p {
+    margin: 0;
+  }
+
+  .story__headline {
+    font-family: var(--font-display);
+    font-size: var(--text-lg);
+    font-weight: 600;
+  }
+
+  .story__body {
+    color: var(--ink-muted);
+  }
+
+  .story__tip {
+    display: grid;
+    gap: var(--space-1);
+    padding-left: var(--space-3);
+    border-left: 2px solid var(--accent);
+  }
+
+  .story__tip-label {
+    font-size: var(--text-sm);
+    font-weight: 600;
+    color: var(--ink-muted);
+  }
+
+  .clock {
+    display: grid;
+    justify-items: center;
+    gap: var(--space-4);
+    /* The rotating arm's square box pokes out diagonally; never let it widen the page. */
+    overflow-x: clip;
+  }
+
+  .jump {
+    display: flex;
+    align-items: center;
+    gap: var(--space-2);
+    font-size: var(--text-sm);
+  }
+
+  .jump input {
+    font: inherit;
+    font-variant-numeric: tabular-nums;
+    color: var(--ink);
+    background: color-mix(in oklab, var(--ink) 8%, transparent);
+    border: 1px solid color-mix(in oklab, var(--ink) 25%, transparent);
+    border-radius: 999px;
+    padding: 6px 12px;
+    min-height: 36px;
+  }
+
+  .jump input::-webkit-calendar-picker-indicator {
+    filter: invert(var(--invert, 0));
+  }
+
+  .foot {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: space-between;
+    gap: var(--space-2) var(--space-4);
+    font-size: var(--text-sm);
+    color: var(--ink-muted);
+  }
+
+  .foot p {
+    margin: 0;
+  }
+
+  @media (min-width: 960px) {
+    .page {
+      padding: var(--space-5) var(--space-6) var(--space-5);
+    }
+
+    .stage {
+      grid-template-columns: minmax(0, 1.15fr) minmax(0, 1fr);
+    }
+  }
+</style>
