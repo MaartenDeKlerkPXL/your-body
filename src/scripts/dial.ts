@@ -13,6 +13,8 @@ export interface Dial {
   minutes(): number;
   /** Move the arm. `animate` takes the shortest way round. */
   set(minutes: number, animate?: boolean): void;
+  /** One full clockwise turn ending on `minutes`: a whole day passing by. */
+  wind(minutes: number, duration: number): gsap.core.Tween;
   isDragging(): boolean;
 }
 
@@ -87,9 +89,19 @@ export function createDial(root: HTMLElement, { reducedMotion, onUserInput }: Op
     set(moves[event.key], true);
   });
 
+  function wind(next: number, duration: number) {
+    tween?.kill();
+    tween = null;
+    target = wrapMinutes(next);
+    const end = target * DEG_PER_MINUTE;
+    gsap.set(arm, { rotation: end - 360 });
+    return gsap.to(arm, { rotation: end, duration, ease: 'power4.inOut' });
+  }
+
   return {
     minutes,
     set,
+    wind,
     isDragging: () => draggable.isDragging || draggable.isThrowing,
   };
 }

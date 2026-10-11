@@ -12,10 +12,33 @@ const first = PHASES[0];
   title="Your Body, Now"
   description="What your body is doing at this very hour, and what you can do with it. An interactive 24-hour journey through your inner clock."
 >
+  <script is:inline>
+    // Decide on the intro before first paint, so nothing flashes. Once per
+    // session, never with reduced motion; a failsafe reveals the page if the
+    // main script doesn't load.
+    (function () {
+      try {
+        if (matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+        if (sessionStorage.getItem('ybn-intro')) return;
+        sessionStorage.setItem('ybn-intro', '1');
+      } catch (e) {
+        return;
+      }
+      var html = document.documentElement;
+      html.classList.add('intro');
+      setTimeout(function () {
+        html.classList.remove('intro');
+      }, 6000);
+    })();
+  </script>
+
   <canvas class="sky" data-sky aria-hidden="true"></canvas>
+  <p class="intro-title" aria-hidden="true" data-intro-title>
+    <span data-intro-title-text>Your body keeps time.</span>
+  </p>
 
   <div class="page">
-    <header class="top">
+    <header class="top" data-intro-chrome>
       <a class="brand" href="/" aria-label="Your Body, Now: home">
         <span class="brand__mark" aria-hidden="true"></span>
         Your Body, Now
@@ -46,7 +69,7 @@ const first = PHASES[0];
 
       <section class="clock" aria-label="Choose a time">
         <Dial />
-        <form class="jump" data-jump>
+        <form class="jump" data-jump data-intro-chrome>
           <label for="jump-time">Jump to</label>
           <input id="jump-time" type="time" step="60" required data-jump-input />
           <button type="submit">Go</button>
@@ -58,7 +81,7 @@ const first = PHASES[0];
       <Curves />
     </section>
 
-    <footer class="foot">
+    <footer class="foot" data-intro-chrome>
       <p>Times are typical for an adult. Your own clock may run earlier or later.</p>
       <a href="/sources/">Method &amp; sources</a>
     </footer>
@@ -73,6 +96,30 @@ const first = PHASES[0];
 </script>
 
 <style>
+  /* While the intro is pending, hide what it will reveal. */
+  :global(.intro :is([data-intro-chrome], [data-dial], [data-lead], [data-phase-name], [data-phase-copy], [data-curves])) {
+    visibility: hidden;
+  }
+
+  .intro-title {
+    position: fixed;
+    inset: 0;
+    z-index: 2;
+    margin: 0;
+    display: grid;
+    place-content: center;
+    padding: var(--space-3);
+    text-align: center;
+    font-family: var(--font-display);
+    font-size: clamp(2rem, 1rem + 4.5vw, 4.5rem);
+    font-weight: 300;
+    font-stretch: 85%;
+    letter-spacing: -0.03em;
+    line-height: 1;
+    pointer-events: none;
+    visibility: hidden;
+  }
+
   .sky {
     position: fixed;
     inset: 0;

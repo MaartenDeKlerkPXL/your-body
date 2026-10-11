@@ -6,6 +6,7 @@ import { paletteAt, rgbToHex, luminance } from '../lib/palette';
 import { formatTime, nowMinutes, parseTime } from '../lib/time';
 import { createDial } from './dial';
 import { createSky } from './sky';
+import { playIntro } from './intro';
 
 gsap.registerPlugin(SplitText);
 
@@ -47,6 +48,8 @@ export function start() {
   const themeMeta = document.querySelector<HTMLMetaElement>('meta[name="theme-color"]');
   const trendEls = CURVES.map((c) => ({ id: c.id, el: $(`[data-trend="${c.id}"]`) }));
 
+  // Set by an inline script in the page before first paint (see index.astro).
+  let intro = root.classList.contains('intro');
   let live = true;
   const setLive = (value: boolean) => {
     live = value;
@@ -56,17 +59,45 @@ export function start() {
 
   const dial = createDial(dialEl, {
     reducedMotion,
-    onUserInput: () => setLive(false),
+    onUserInput: () => {
+      if (!intro) setLive(false);
+    },
   });
   const sky = createSky($<HTMLCanvasElement>('[data-sky]'), reducedMotion);
 
   // A shared link like ?t=03:00 opens straight on that moment.
   const fromUrl = parseTime(new URLSearchParams(location.search).get('t'));
   setLive(fromUrl === null);
-  dial.set(fromUrl ?? nowMinutes());
+  const startAt = fromUrl ?? nowMinutes();
+
+  if (intro) {
+    playIntro(
+      {
+        title: $('[data-intro-title]'),
+        titleText: $('[data-intro-title-text]'),
+        dial: dialEl,
+        ticks: [...dialEl.querySelectorAll('.dial__tick')],
+        labels: [...dialEl.querySelectorAll('.dial__label')],
+        handle,
+        chrome: [...document.querySelectorAll<HTMLElement>('[data-intro-chrome]')],
+        lead,
+        phaseName: nameEl,
+        copy: copyEl,
+        curves: $('[data-curves]'),
+        plot: $('.curves__plot'),
+      },
+      (duration) => dial.wind(startAt, duration),
+      () => {
+        intro = false;
+      },
+    );
+  } else {
+    document.querySelector('[data-intro-title]')?.remove();
+    dial.set(startAt);
+  }
 
   window.setInterval(() => {
-    if (live && !dial.isDragging()) dial.set(nowMinutes());
+    if (live && !intro && !dial.isDragging()) dial.set(nowMinutes());
   }, 1000);
 
   nowButton.addEventListener('click', () => {
@@ -100,7 +131,9 @@ export function start() {
 
   const showPhase = (phase: Phase, instant: boolean) => {
     phaseAnimation?.kill();
-    gsap.set([nameEl, copyEl], { clearProps: 'opacity,visibility,transform' });
+    // The intro owns visibility while it runs; otherwise recover from any
+    // half-finished transition.
+    if (!intro) gsap.set([nameEl, copyEl], { clearProps: 'opacity,visibility,transform' });
     if (instant || reducedMotion) {
       writePhase(phase);
       return;
@@ -190,15 +223,15 @@ export function start() {
       handle.setAttribute('aria-valuetext', time);
       if (document.activeElement !== jumpInput) jumpInput.value = time;
       for (const t of trendEls) t.el.textContent = TREND_WORDS[curveTrend(t.id, minutes)];
-      if (!live && lastLive !== null) syncUrl(minutes);
+      if (!live && !intro && lastLive !== null) syncUrl(minutes);
       lastMinute = minute;
       lastLive = live;
     }
 
     const phase = phaseAt(minutes);
     if (phase.id !== lastPhase) {
-      showPhase(phase, lastPhase === '' || dial.isDragging());
-      if (lastPhase !== '' && !live) announce(minutes, phase);
+      showPhase(phase, lastPhase === '' || intro || dial.isDragging());
+      if (lastPhase !== '' && !live && !intro) announce(minutes, phase);
       lastPhase = phase.id;
     }
   });
