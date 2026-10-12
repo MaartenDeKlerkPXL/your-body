@@ -114,8 +114,9 @@ Everything between today's prototype and an Awwwards submission. Ordered by prio
 - [x] Submission kit in `docs/AWWWARDS.md`: copy for every form field, tags, technologies, colours, fonts, credits, pre-submission checklist
 - [x] Images in `press/`: five 1600×1200 thumbnail options, eight desktop and four phone screenshots
 - [ ] **P0** Record the 15–30 s video on a real machine (shot list in `docs/AWWWARDS.md`)
-- [ ] **P0** Confirm credits and attach a custom domain before submitting
-- [ ] **P1** Write a case study (Medium / portfolio) explaining concept, process and tech
+- [x] Credits confirmed
+- [ ] **P0** Attach a custom domain before submitting
+- [x] Case study drafted (shared doc): idea, science, design, interaction, sound, performance, accessibility, lessons
 - [ ] **P1** Share before submitting to gather feedback and first visitors (LinkedIn, X, Reddit r/web_design, Dribbble)
 - [ ] **P1** Also submit to CSS Design Awards, FWA and Godly
 - [ ] **P2** Submit for the Developer Award as well (semantics, performance, accessibility count there)

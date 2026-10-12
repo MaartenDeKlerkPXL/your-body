@@ -82,7 +82,7 @@ Bricolage Grotesque (variable), Instrument Sans
 | Accent ochtend | `#E8592A` |
 | Accent focus | `#2468E0` |
 
-**Credits** ⚠️ controleer en vul aan
+**Credits** (bevestigd)
 ```
 Concept, design & development: Maarten De Klerk
 Country: Belgium
@@ -146,7 +146,7 @@ Neem dit op op je eigen computer. In de testomgeving loopt de shader niet vloeie
 
 - **Deel de site al vóór je instuurt**: LinkedIn, X, r/web_design, Dribbble, en je PXL-netwerk. Feedback en eerste bezoekers helpen.
 - **Stuur ook in bij** CSS Design Awards, The FWA en Godly. Dat kost weinig extra moeite met hetzelfde materiaal.
-- **Schrijf een case study** (Medium of je portfolio). Structuur:
+- **Case study**: staat klaar als gedeeld document (link in het gesprek), klaar om te exporteren naar Medium of je portfolio. Opbouw:
   1. Het idee: een site die op jouw klok leeft
   2. De wetenschap: bronnen zoeken, tekst afstemmen op het bewijs
   3. Design: kleur per minuut (OKLab, contrast gegarandeerd), vorm per fase, typografie per fase
