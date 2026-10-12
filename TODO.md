@@ -11,14 +11,15 @@ Everything between today's prototype and an Awwwards submission. Ordered by prio
 - [x] Live mode follows the real clock; explore mode with shareable URL (`?t=HH:MM`)
 - [x] WebGL sky (OGL shader) whose colour and tempo follow the hour
 - [x] Day palette interpolated in OKLab, WCAG AA contrast guaranteed against background and glow (tested every 5 minutes of the day)
-- [x] Variable display font that "breathes" with alertness (weight + width)
+- [x] Variable display font: each phase has its own fixed weight and width (light at night, bold at peaks); text never shifts while scrolling or dragging
 - [x] Four stylised curves (alertness, core temperature, cortisol, melatonin) with trend labels, not distinguished by colour alone
 - [x] Eight phases of the day with headline, explanation and tip
 - [x] Opening animation: title → dial assembles → a full day spins by → lands on now. Skippable, once per session, off with reduced motion
 - [x] Reduced-motion support, screen reader announcements, no horizontal scroll on mobile
 - [x] Verified sources for every claim (`docs/CONTENT.md`), reference list on `/sources`, each chapter links its sources
 - [x] **"A day in your body"**: scroll-driven journey through all 8 phases. Scrolling moves the clock (sky, palette, type), sticky chapters, Lenis smooth scroll, progress rail (side on desktop, bottom bar on mobile) to jump between phases, "Back to now"
-- [x] Idle hint: the dial knob wiggles once if nobody touches it
+- [x] Idle hint: the dial knob (or the phone timeline) wiggles once if nobody touches it
+- [x] **Phone timeline**: on screens under 720px the dial is replaced by a full-width tape you drag under a fixed needle (inertia, quarter-hour snap, endless wrap, phase names, keyboard, screen reader slider); vertical page scroll still works
 - [x] Deployed on Vercel
 - [x] **A form per phase**: one abstract body in the shader changes character through the day (soft breathing sphere with stars, flattened horizon, rising sun with rays, crisp focus rings, drooping drop, orbiting satellites and pulses, sunset halo, dissolving into dust), blending between phases while scrolling
 
@@ -59,7 +60,6 @@ Everything between today's prototype and an Awwwards submission. Ordered by prio
 ## 4. Features
 
 - [ ] **P1** Journey: scroll-scrubbed mini curve chart inside each chapter
-- [ ] **P1** Mobile: horizontal time scrubber at the bottom of the screen, thumb-friendly, in place of the large dial
 - [ ] **P1** Optional ambient sound per phase (off by default, clear on/off toggle, fades between phases)
 - [ ] **P1** "Share this moment": copy link to the current time
 - [ ] **P2** Personal mode: enter your own bedtime and wake time, and everything shifts

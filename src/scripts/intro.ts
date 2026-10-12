@@ -62,8 +62,8 @@ export function playIntro(
 
   // 2. The dial assembles: ticks sweep in clockwise, then the hour labels.
   tl.fromTo(parts.dial, { autoAlpha: 0, scale: 0.9 }, { autoAlpha: 1, scale: 1, duration: 1.4, ease: 'expo.out' }, '-=0.25')
-    .from(parts.ticks, { opacity: 0, duration: 0.25, stagger: 0.005, ease: 'none' }, '<')
-    .from(parts.labels, { opacity: 0, y: 4, duration: 0.4, stagger: 0.04, ease: 'power2.out' }, '<0.3')
+    .from(parts.ticks, { opacity: 0, duration: 0.25, stagger: { amount: 0.5 }, ease: 'none' }, '<')
+    .from(parts.labels, { opacity: 0, y: 4, duration: 0.4, stagger: { amount: 0.35 }, ease: 'power2.out' }, '<0.3')
     .from(parts.handle, { scale: 0, duration: 0.5, ease: 'back.out(2.5)' }, '<0.2');
 
   // 3. A whole day passes, landing on the target time.

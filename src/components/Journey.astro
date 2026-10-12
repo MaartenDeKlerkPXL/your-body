@@ -2,6 +2,7 @@
 import { PHASES } from '../content/phases';
 import { CURVES, TREND_LABELS, curveTrend } from '../lib/circadian';
 import { formatTime } from '../lib/time';
+import { displayAxesStyle } from '../lib/type';
 
 // Scrolling through this section is travelling through the day: the page's
 // clock follows the scroll position (see scripts/journey.ts).
@@ -11,6 +12,7 @@ const chapters = PHASES.map((p) => {
     ...p,
     range: `${formatTime(p.start * 60)}–${p.end === 24 ? '24:00' : formatTime(p.end * 60)}`,
     signals: CURVES.map((c) => ({ label: c.label, trend: TREND_LABELS[curveTrend(c.id, mid)] })),
+    axes: displayAxesStyle(p),
   };
 });
 ---
@@ -26,7 +28,15 @@ const chapters = PHASES.map((p) => {
 
   {
     chapters.map((c, i) => (
-      <article class="chapter" id={`phase-${c.id}`} aria-labelledby={`chapter-${c.id}`} data-chapter data-start={c.start} data-end={c.end}>
+      <article
+        class="chapter"
+        id={`phase-${c.id}`}
+        aria-labelledby={`chapter-${c.id}`}
+        style={c.axes}
+        data-chapter
+        data-start={c.start}
+        data-end={c.end}
+      >
         <div class="chapter__inner">
           <header class="chapter__head">
             <p class="chapter__meta">
@@ -108,6 +118,8 @@ const chapters = PHASES.map((p) => {
 
   .journey__intro,
   .journey__outro {
+    --display-wght: 560;
+    --display-wdth: 90%;
     min-height: 130svh;
     display: grid;
     align-items: center;

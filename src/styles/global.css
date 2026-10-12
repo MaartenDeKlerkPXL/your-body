@@ -5,14 +5,14 @@
   --accent: #8a90ff;
   --ink: #f2f1fb;
   --ink-muted: #b9b8d4;
-  --energy: 0.2;
 
   --font-display: 'Bricolage Grotesque Variable', 'Bricolage Grotesque', system-ui, sans-serif;
   --font-body: 'Instrument Sans Variable', 'Instrument Sans', system-ui, sans-serif;
 
-  /* The display face "breathes" with alertness: thin at night, bold at peaks. */
-  --display-wght: calc(220 + var(--energy) * 560);
-  --display-wdth: calc(78% + var(--energy) * 22%);
+  /* Display face weight and width follow each phase's alertness (lib/type.ts):
+     thin at night, bold at peaks. Fixed per phase, so text never shifts. */
+  --display-wght: 260;
+  --display-wdth: 80%;
 
   --text-sm: 0.875rem;
   --text-base: 1rem;

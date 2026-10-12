@@ -15,6 +15,8 @@ export interface Dial {
   set(minutes: number, animate?: boolean): void;
   /** One full clockwise turn ending on `minutes`: a whole day passing by. */
   wind(minutes: number, duration: number): gsap.core.Tween;
+  /** Handle a slider key (arrows, Page Up/Down, Home/End). Returns true if handled. */
+  key(name: string): boolean;
   isDragging(): boolean;
 }
 
@@ -70,7 +72,8 @@ export function createDial(root: HTMLElement, { reducedMotion, onUserInput }: Op
     });
   }
 
-  handle.addEventListener('keydown', (event) => {
+  /** Keyboard control, shared with the mobile timeline. Returns true if handled. */
+  function key(name: string): boolean {
     const from = tween ? target : minutes();
     const snapped = Math.round(from / STEP) * STEP;
     const moves: Record<string, number> = {
@@ -83,10 +86,14 @@ export function createDial(root: HTMLElement, { reducedMotion, onUserInput }: Op
       Home: 0,
       End: MINUTES_PER_DAY - STEP,
     };
-    if (!(event.key in moves)) return;
-    event.preventDefault();
+    if (!(name in moves)) return false;
     onUserInput();
-    set(moves[event.key], true);
+    set(moves[name], true);
+    return true;
+  }
+
+  handle.addEventListener('keydown', (event) => {
+    if (key(event.key)) event.preventDefault();
   });
 
   function wind(next: number, duration: number) {
@@ -102,6 +109,7 @@ export function createDial(root: HTMLElement, { reducedMotion, onUserInput }: Op
     minutes,
     set,
     wind,
+    key,
     isDragging: () => draggable.isDragging || draggable.isThrowing,
   };
 }

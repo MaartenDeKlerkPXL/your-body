@@ -3,6 +3,7 @@ import Base from '../layouts/Base.astro';
 import Dial from '../components/Dial.astro';
 import Curves from '../components/Curves.astro';
 import Journey from '../components/Journey.astro';
+import Scrubber from '../components/Scrubber.astro';
 import { PHASES } from '../content/phases';
 
 // Server-render the first phase so the page reads fine before (or without) JS.
@@ -70,6 +71,7 @@ const first = PHASES[0];
 
       <section class="clock" aria-label="Choose a time">
         <Dial />
+        <Scrubber />
         <form class="jump" data-jump data-intro-chrome>
           <label for="jump-time">Jump to</label>
           <input id="jump-time" type="time" step="60" required data-jump-input />
@@ -100,7 +102,7 @@ const first = PHASES[0];
 
 <style>
   /* While the intro is pending, hide what it will reveal. */
-  :global(.intro :is([data-intro-chrome], [data-dial], [data-lead], [data-phase-name], [data-phase-copy], [data-curves])) {
+  :global(.intro :is([data-intro-chrome], [data-dial], [data-scrub], [data-lead], [data-phase-name], [data-phase-copy], [data-curves])) {
     visibility: hidden;
   }
 
@@ -310,6 +312,21 @@ const first = PHASES[0];
     gap: var(--space-4);
     /* The rotating arm's square box pokes out diagonally; never let it widen the page. */
     overflow-x: clip;
+  }
+
+  /* Phones get the timeline, wider screens the dial. */
+  .clock :global([data-scrub]) {
+    display: none;
+  }
+
+  @media (max-width: 719px) {
+    .clock :global([data-dial]) {
+      display: none;
+    }
+
+    .clock :global([data-scrub]) {
+      display: grid;
+    }
   }
 
   .jump {

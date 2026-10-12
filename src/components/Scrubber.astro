@@ -1,0 +1,200 @@
+---
+import { PHASES } from '../content/phases';
+
+// A horizontal "tape" timeline for phones: drag it under a fixed needle.
+// Three copies of the day are drawn so the tape always fills the screen while
+// it wraps around midnight; scripts/scrubber.ts keeps the middle copy centred.
+const HOUR = 64; // px per hour
+const DAYS = 3;
+const DAY = HOUR * 24;
+const H = 76;
+
+const ticks = Array.from({ length: DAYS * 96 }, (_, i) => {
+  const x = (i / 4) * HOUR;
+  const hour = i % 4 === 0;
+  const half = i % 2 === 0;
+  return { x, hour, len: hour ? 22 : half ? 13 : 8 };
+});
+
+const labels = Array.from({ length: DAYS * 24 }, (_, i) => ({
+  x: i * HOUR,
+  text: String(i % 24).padStart(2, '0'),
+}));
+
+const phases = Array.from({ length: DAYS }, (_, d) =>
+  PHASES.map((p) => ({ x: d * DAY + ((p.start + p.end) / 2) * HOUR, name: p.name, edge: d * DAY + p.start * HOUR })),
+).flat();
+---
+
+<div class="scrub" data-scrub style={`--hour: ${HOUR}px`}>
+  <div class="scrub__readout" aria-hidden="true">
+    <span class="scrub__time" data-scrub-time>00:00</span>
+    <span class="scrub__hint" data-scrub-hint>Drag the timeline</span>
+  </div>
+
+  <div
+    class="scrub__viewport"
+    role="slider"
+    tabindex="0"
+    aria-label="Time of day"
+    aria-valuemin="0"
+    aria-valuemax="1439"
+    aria-valuenow="0"
+    aria-valuetext="00:00"
+    data-scrub-slider
+  >
+    <svg class="scrub__tape" width={DAY * DAYS} height={H} viewBox={`0 0 ${DAY * DAYS} ${H}`} aria-hidden="true" data-scrub-tape>
+      {phases.map((p) => <line class="scrub__edge" x1={p.edge} y1="44" x2={p.edge} y2={H} />)}
+      {ticks.map((t) => <line class:list={['scrub__tick', { 'scrub__tick--hour': t.hour }]} x1={t.x} y1="0" x2={t.x} y2={t.len} />)}
+      {
+        labels.map((l) => (
+          <text class="scrub__label" x={l.x} y="36">
+            {l.text}
+          </text>
+        ))
+      }
+      {
+        phases.map((p) => (
+          <text class="scrub__phase" x={p.x} y="66">
+            {p.name}
+          </text>
+        ))
+      }
+    </svg>
+    <span class="scrub__needle" aria-hidden="true" data-scrub-needle></span>
+  </div>
+
+  <!-- Draggable moves this invisible proxy; its x drives the time. -->
+  <div class="scrub__proxy" aria-hidden="true" data-scrub-proxy></div>
+</div>
+
+<style>
+  .scrub {
+    position: relative;
+    display: grid;
+    justify-items: center;
+    gap: var(--space-3);
+    width: 100%;
+  }
+
+  .scrub__readout {
+    display: grid;
+    justify-items: center;
+    gap: var(--space-1);
+  }
+
+  .scrub__time {
+    font-family: var(--font-display);
+    font-size: clamp(3.5rem, 2rem + 8vw, 5rem);
+    font-weight: 560;
+    font-stretch: 90%;
+    font-variant-numeric: tabular-nums;
+    line-height: 1;
+    letter-spacing: -0.03em;
+  }
+
+  .scrub__hint {
+    font-size: var(--text-sm);
+    color: var(--ink-muted);
+  }
+
+  /* Full-bleed: break out of the page's side padding. */
+  .scrub__viewport {
+    position: relative;
+    width: calc(100% + 2 * var(--space-3));
+    margin-inline: calc(-1 * var(--space-3));
+    height: 92px;
+    overflow: hidden;
+    touch-action: pan-y;
+    cursor: grab;
+    user-select: none;
+    -webkit-user-select: none;
+    -webkit-tap-highlight-color: transparent;
+    -webkit-mask-image: linear-gradient(90deg, transparent, #000 18%, #000 82%, transparent);
+    mask-image: linear-gradient(90deg, transparent, #000 18%, #000 82%, transparent);
+    border-radius: 12px;
+  }
+
+  .scrub__viewport:active {
+    cursor: grabbing;
+  }
+
+  .scrub__viewport:focus-visible {
+    outline-offset: -4px;
+  }
+
+  .scrub__tape {
+    position: absolute;
+    left: 0;
+    top: 12px;
+    overflow: visible;
+    will-change: transform;
+  }
+
+  .scrub__tick {
+    stroke: var(--ink);
+    stroke-opacity: 0.35;
+    stroke-width: 1;
+  }
+
+  .scrub__tick--hour {
+    stroke-opacity: 0.8;
+    stroke-width: 1.5;
+  }
+
+  .scrub__edge {
+    stroke: var(--ink);
+    stroke-opacity: 0.18;
+    stroke-width: 1;
+  }
+
+  .scrub__label {
+    fill: var(--ink-muted);
+    font-family: var(--font-body);
+    font-size: 12px;
+    font-variant-numeric: tabular-nums;
+    text-anchor: middle;
+  }
+
+  .scrub__phase {
+    fill: var(--ink-muted);
+    font-family: var(--font-body);
+    font-size: 11px;
+    text-anchor: middle;
+    letter-spacing: 0.02em;
+  }
+
+  /* The needle: a bright line with a small cap, fixed in the middle. */
+  .scrub__needle {
+    position: absolute;
+    left: 50%;
+    top: 6px;
+    height: 32px; /* over the ticks only, so the hour labels stay readable */
+    width: 2px;
+    margin-left: -1px;
+    background: var(--accent);
+    border-radius: 2px;
+    box-shadow: 0 0 16px 2px color-mix(in oklab, var(--accent) 55%, transparent);
+    pointer-events: none;
+  }
+
+  .scrub__needle::before {
+    content: '';
+    position: absolute;
+    left: 50%;
+    top: -2px;
+    width: 10px;
+    height: 10px;
+    margin-left: -5px;
+    border-radius: 50%;
+    background: var(--accent);
+  }
+
+  .scrub__proxy {
+    position: absolute;
+    width: 0;
+    height: 0;
+    visibility: hidden;
+    pointer-events: none;
+  }
+</style>

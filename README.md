@@ -12,7 +12,7 @@ Gebouwd met het oog op een Awwwards Site of the Day.
 | Animatie | GSAP: Draggable + InertiaPlugin (draaiknop), SplitText (titels), ScrollTrigger (reveals) |
 | Scroll | [Lenis](https://lenis.darkroom.engineering) smooth scroll |
 | WebGL | [OGL](https://github.com/oframe/ogl) met een eigen fragment shader |
-| Fonts | Bricolage Grotesque (variabel, "ademt" mee met alertheid) + Instrument Sans, self-hosted via Fontsource |
+| Fonts | Bricolage Grotesque (variabel: vaste dikte en breedte per fase) + Instrument Sans, self-hosted via Fontsource |
 | Tests | Vitest |
 | Hosting | Vercel |
 
@@ -34,13 +34,15 @@ src/
   lib/circadian.ts      gestileerde 24u-curves: alertheid, temperatuur, cortisol, melatonine
   lib/palette.ts        kleur van de dag (OKLab), met gegarandeerd WCAG AA-contrast
   lib/form.ts           de vorm per fase (parameters voor de shader), met overgangen
+  lib/type.ts           vaste letterdikte en -breedte per fase
   lib/time.ts           tijdhulpjes
   scripts/app.ts        regie: frame-loop, fases, URL, live/verkenmodus
   scripts/dial.ts       24u-draaiknop (slepen, gooien, toetsenbord)
+  scripts/scrubber.ts   tijdbalk voor telefoons (stuurt de draaiknop aan)
   scripts/intro.ts      openingsanimatie
   scripts/journey.ts    scroll-reis: scrollpositie → tijd, reveals, voortgangsbalk
   scripts/sky.ts        WebGL-achtergrond
-  components/           Dial, Curves, Journey
+  components/           Dial, Scrubber, Curves, Journey
   pages/                index, sources
 docs/
   CONTENT.md            elke wetenschappelijke claim + bron die nog moet worden toegevoegd

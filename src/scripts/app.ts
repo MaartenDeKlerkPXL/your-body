@@ -5,10 +5,12 @@ import { phaseAt, type Phase } from '../content/phases';
 import { paletteAt, rgbToHex, luminance } from '../lib/palette';
 import { formatTime, nowMinutes, parseTime } from '../lib/time';
 import { createDial } from './dial';
+import { createScrubber } from './scrubber';
 import { createSky } from './sky';
 import { playIntro } from './intro';
 import { createJourney } from './journey';
 import { formAt } from '../lib/form';
+import { displayAxes } from '../lib/type';
 
 gsap.registerPlugin(SplitText);
 
@@ -59,6 +61,17 @@ export function start() {
       if (!intro) setLive(false);
     },
   });
+  const scrubEl = $('[data-scrub]');
+  const scrubber = createScrubber(scrubEl, {
+    dial,
+    reducedMotion,
+    onUserInput: () => {
+      touched = true;
+      if (!intro) setLive(false);
+    },
+  });
+  // Whichever control the layout shows: the dial, or the timeline on phones.
+  const clockEl = () => (scrubber.visible() ? scrubEl : dialEl);
   const sky = createSky($<HTMLCanvasElement>('[data-sky]'), reducedMotion);
 
   // If nobody has touched the dial after a few seconds, the knob wiggles
@@ -67,6 +80,10 @@ export function start() {
     if (reducedMotion) return;
     window.setTimeout(() => {
       if (touched || window.scrollY > window.innerHeight * 0.5) return;
+      if (scrubber.visible()) {
+        scrubber.nudge();
+        return;
+      }
       const knob = dialEl.querySelector('.dial__knob');
       gsap
         .timeline()
@@ -83,14 +100,15 @@ export function start() {
   const startAt = fromUrl ?? nowMinutes();
 
   if (intro) {
+    const onPhone = scrubber.visible();
     playIntro(
       {
         title: $('[data-intro-title]'),
         titleText: $('[data-intro-title-text]'),
-        dial: dialEl,
-        ticks: [...dialEl.querySelectorAll('.dial__tick')],
-        labels: [...dialEl.querySelectorAll('.dial__label')],
-        handle,
+        dial: onPhone ? scrubEl : dialEl,
+        ticks: [...(onPhone ? scrubEl.querySelectorAll('.scrub__tick') : dialEl.querySelectorAll('.dial__tick'))],
+        labels: [...(onPhone ? scrubEl.querySelectorAll('.scrub__label') : dialEl.querySelectorAll('.dial__label'))],
+        handle: onPhone ? $('[data-scrub-needle]') : handle,
         chrome: [...document.querySelectorAll<HTMLElement>('[data-intro-chrome]')],
         lead,
         phaseName: nameEl,
@@ -111,7 +129,7 @@ export function start() {
   }
 
   window.setInterval(() => {
-    if (live && !intro && !dial.isDragging()) dial.set(nowMinutes());
+    if (live && !intro && !dial.isDragging() && !scrubber.isDragging()) dial.set(nowMinutes());
   }, 1000);
 
   nowButton.addEventListener('click', () => {
@@ -137,6 +155,10 @@ export function start() {
   const writePhase = (phase: Phase) => {
     split?.revert();
     split = null;
+    // The hero title takes its phase's weight while the copy is swapped out.
+    const axes = displayAxes(phase);
+    root.style.setProperty('--display-wght', String(axes.wght));
+    root.style.setProperty('--display-wdth', `${axes.wdth}%`);
     nameEl.textContent = phase.name;
     headlineEl.textContent = phase.headline;
     bodyEl.textContent = phase.body;
@@ -210,7 +232,7 @@ export function start() {
   let formMix = 0; // the phase's form fades in while travelling the journey
 
   gsap.ticker.add((_time, deltaMs) => {
-    const rect = dialEl.getBoundingClientRect(); // read before any writes
+    const rect = clockEl().getBoundingClientRect(); // read before any writes
     const minutes = dial.minutes();
     // The sky follows the scroll while travelling through the journey,
     // the dial (and everything around it) keeps its own time.
@@ -235,7 +257,6 @@ export function start() {
     setVar('--accent', rgbToHex(palette.accent));
     setVar('--ink', rgbToHex(palette.ink));
     setVar('--ink-muted', rgbToHex(palette.inkMuted));
-    setVar('--energy', energy.toFixed(3));
     setVar('--invert', luminance(palette.bg) > 0.18 ? '0' : '1');
     themeMeta?.setAttribute('content', bg);
 
@@ -256,6 +277,7 @@ export function start() {
       Math.min(deltaMs, 100) / 1000,
     );
     journey.update(scrolled);
+    scrubber.update(minutes, live);
 
     const minute = Math.floor(minutes);
     if (minute !== lastMinute || live !== lastLive) {
