@@ -20,6 +20,7 @@ Everything between today's prototype and an Awwwards submission. Ordered by prio
 - [x] **"A day in your body"**: scroll-driven journey through all 8 phases. Scrolling moves the clock (sky, palette, type), sticky chapters, Lenis smooth scroll, progress rail (side on desktop, bottom bar on mobile) to jump between phases, "Back to now"
 - [x] Idle hint: the dial knob (or the phone timeline) wiggles once if nobody touches it
 - [x] **Mini charts per chapter**: four small multiples (alertness, temperature, cortisol, melatonin) over the phase's three hours plus context; a playhead and dot follow the scroll; hover shows a crosshair and one readout with all four; hidden text summary for screen readers
+- [x] **Form behind the clock**: the current phase's form shows at half strength behind the dial (inside its ring; rays, rings, satellites and halo reach past it) or behind the timeline's digits on phones, morphing through the day during the intro and growing into the journey's stage; text on top measured at ≥ 5:1 in every phase
 - [x] **Ambient sound per phase**: generative Web Audio score (drone chord per phase with crossfades, air with a tide-like swell, sparse chimes, soft pulse in second wind, generated reverb, limiter). Off by default, starts only on click, follows the shown time, suspends in background tabs, ~6 KB lazy-loaded
 - [x] **Phone timeline**: on screens under 720px the dial is replaced by a full-width tape you drag under a fixed needle (inertia, quarter-hour snap, endless wrap, phase names, keyboard, screen reader slider); vertical page scroll still works
 - [x] Deployed on Vercel
@@ -57,7 +58,6 @@ Everything between today's prototype and an Awwwards submission. Ordered by prio
 - [ ] **P1** Fine-tune the 24-hour palette on real screens (OLED phone, laptop, external monitor)
 - [ ] **P1** Micro-interactions: dial hover state, magnetic knob, haptic-feeling snap
 - [ ] **P2** Custom cursor that shows the time when hovering over the dial
-- [ ] **P2** Show the current phase's form subtly behind the dial in the first screen too
 - [ ] **P2** Phase transition effect in the shader (a soft "pulse" when crossing into a new phase)
 
 ## 4. Features

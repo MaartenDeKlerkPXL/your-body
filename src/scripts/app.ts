@@ -274,10 +274,17 @@ export function start() {
   // The glow drifts between the dial and the journey's stage instead of jumping.
   let focusX = window.innerWidth * 0.7;
   let focusY = window.innerHeight * 0.4;
-  let formMix = 0; // the phase's form fades in while travelling the journey
+  // The phase's form: half strength and small behind the clock in the first
+  // screen, full size on the journey's stage.
+  let formMix = 0;
+  let formScale = 0.6;
+  const HERO_FORM = 0.5;
+  const scrubTime = $('[data-scrub-time]');
 
   gsap.ticker.add((_time, deltaMs) => {
-    const rect = clockEl().getBoundingClientRect(); // read before any writes
+    // On phones the form sits behind the timeline's big digits.
+    const onPhone = scrubber.visible();
+    const rect = (onPhone ? scrubTime : clockEl()).getBoundingClientRect(); // read before any writes
     const minutes = dial.minutes();
     // The sky follows the scroll while travelling through the journey,
     // the dial (and everything around it) keeps its own time.
@@ -295,7 +302,15 @@ export function start() {
     const ease = reducedMotion ? 1 : Math.min(1, deltaMs / 160);
     focusX += (targetX - focusX) * ease;
     focusY += (targetY - focusY) * ease;
-    formMix += ((scrolled === null ? 0 : 1) - formMix) * (reducedMotion ? 1 : Math.min(1, deltaMs / 400));
+    // Hero size: inside the dial's ring (ring radius is 128/300 of the dial),
+    // or about the digits' height on phones. Forms are ~0.25 of the shorter
+    // screen side at scale 1.
+    const unit = 0.25 * Math.min(window.innerWidth, window.innerHeight);
+    const heroSize = onPhone ? rect.height * 0.9 : rect.width * (128 / 300) * 0.62;
+    const targetScale = scrolled === null ? heroSize / unit : 1;
+    const formEase = reducedMotion ? 1 : Math.min(1, deltaMs / 400);
+    formMix += ((scrolled === null ? HERO_FORM : 1) - formMix) * formEase;
+    formScale += (targetScale - formScale) * formEase;
 
     const now = performance.now();
     if (now - lastCss >= CSS_INTERVAL) {
@@ -325,6 +340,7 @@ export function start() {
         focus: [focusX, focusY],
         form: formAt(shown),
         formMix,
+        formScale,
       },
       Math.min(deltaMs, 100) / 1000,
     );

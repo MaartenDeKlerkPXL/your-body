@@ -31,6 +31,7 @@ const fragment = /* glsl */ `
 
   // The phase's form (see lib/form.ts), and how visible it is.
   uniform float uForm;
+  uniform float uScale;
   uniform float uRadius;
   uniform float uSquash;
   uniform float uSag;
@@ -140,7 +141,9 @@ const fragment = /* glsl */ `
 
     // --- The form ------------------------------------------------------------
     if (uForm > 0.001) {
-      vec2 r2 = p - f;
+      // The whole form lives in its own scaled space, so it can sit small
+      // behind the dial or fill the journey's stage with the same geometry.
+      vec2 r2 = (p - f) / max(uScale, 0.05);
       r2.y -= uRise;
       // Droop: stretch the lower half downward.
       r2.y /= mix(1.0, 1.0 + uSag, smoothstep(0.05, -0.35, r2.y));
@@ -240,6 +243,8 @@ export interface SkyState {
   /** The phase's form and how visible it is (0–1). */
   form: Form;
   formMix: number;
+  /** Size of the form relative to its journey size (1). */
+  formScale: number;
 }
 
 export interface Sky {
@@ -377,6 +382,7 @@ export function createSky(canvas: HTMLCanvasElement, reducedMotion: boolean): Sk
       setUniform('uGlow', state.glow);
       setUniform('uAccent', state.accent);
       setUniform('uForm', state.formMix);
+      setUniform('uScale', state.formScale);
       setUniform('uRadius', form.radius);
       setUniform('uSquash', form.squash);
       setUniform('uSag', form.sag);

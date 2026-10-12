@@ -196,6 +196,8 @@ const labels = [0, 3, 6, 9, 12, 15, 18, 21].map((h) => {
 
   .dial__hint {
     font-size: var(--text-sm);
-    color: var(--ink-muted);
+    /* Full ink: it sits on top of the phase's form, where muted ink can dip
+       below 4.5:1. */
+    color: var(--ink);
   }
 </style>
