@@ -11,8 +11,8 @@ Gebouwd met het oog op een Awwwards Site of the Day.
 | Framework | [Astro](https://astro.build) (statische output) + TypeScript |
 | Animatie | GSAP: Draggable + InertiaPlugin (draaiknop), SplitText (titels), ScrollTrigger (reveals) |
 | Scroll | [Lenis](https://lenis.darkroom.engineering) smooth scroll |
-| WebGL | [OGL](https://github.com/oframe/ogl) met een eigen fragment shader |
-| Fonts | Bricolage Grotesque (variabel: vaste dikte en breedte per fase) + Instrument Sans, self-hosted via Fontsource |
+| WebGL | gewone WebGL (geen library) met een eigen fragment shader, compileert op de achtergrond |
+| Fonts | Bricolage Grotesque (variabel, subset tot de gebruikte tekens) + Instrument Sans (Fontsource), allebei self-hosted en preloaded |
 | Tests | Vitest |
 | Hosting | Vercel |
 
@@ -24,6 +24,18 @@ npm run dev      # http://localhost:4321
 npm test         # unit tests (model, palet, contrast)
 npm run build    # astro check + productie-build naar dist/
 ```
+
+## Performance
+
+Lighthouse (lokale build, mediaan van 3 runs, software-GPU): **mobiel 82, desktop 84** voor performance; 100 voor accessibility, best practices en SEO. Wat er voor zorgt:
+
+- CSS-kleurvariabelen worden ±10× per seconde bijgewerkt, niet elk frame (de shader krijgt wel elk frame)
+- De scroll-reis (Lenis, ScrollTrigger) laadt als apart bestand zodra de browser even niets te doen heeft
+- WebGL zonder library; de shader compileert op de achtergrond (`KHR_parallel_shader_compile`) en tekent op een lagere, adaptieve resolutie
+- Het display-font is gesubset (`scripts/subset-display-font.sh`, 131 → 78 KB); beide fonts worden preloaded, CSS staat inline
+- Reveals gebruiken alleen opacity, zodat koppen altijd in de toegankelijkheidsboom zitten
+
+Draai `scripts/subset-display-font.sh` opnieuw (vereist `pip install fonttools brotli`) als er koppen bijkomen met nieuwe tekens.
 
 ## Structuur
 
@@ -42,7 +54,7 @@ src/
   scripts/scrubber.ts   tijdbalk voor telefoons (stuurt de draaiknop aan)
   scripts/intro.ts      openingsanimatie
   scripts/journey.ts    scroll-reis: scrollpositie → tijd, reveals, voortgangsbalk
-  scripts/sky.ts        WebGL-achtergrond
+  scripts/sky.ts        WebGL-achtergrond (adaptieve kwaliteit)
   components/           Dial, Scrubber, Curves, Journey
   pages/                index, sources
 docs/

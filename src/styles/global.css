@@ -1,3 +1,15 @@
+/* Display face: Bricolage Grotesque (variable: opsz, wght, wdth), subset to the
+   characters the headings use. Regenerate with scripts/subset-display-font.sh. */
+@font-face {
+  font-family: 'Bricolage Grotesque Variable';
+  font-style: normal;
+  font-display: swap;
+  font-weight: 200 800;
+  font-stretch: 75% 100%;
+  src: url('/fonts/bricolage-grotesque-display.woff2') format('woff2-variations');
+  unicode-range: U+0020-007E, U+00A0, U+00B7, U+00E4, U+2013-2014, U+2018-2019, U+201C-201D, U+2026, U+2190;
+}
+
 :root {
   /* Live colours, rewritten every frame by the clock. Defaults = deep night. */
   --bg: #0b1026;

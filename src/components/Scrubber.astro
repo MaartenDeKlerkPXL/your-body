@@ -2,31 +2,38 @@
 import { PHASES } from '../content/phases';
 
 // A horizontal "tape" timeline for phones: drag it under a fixed needle.
-// Three copies of the day are drawn so the tape always fills the screen while
-// it wraps around midnight; scripts/scrubber.ts keeps the middle copy centred.
+// The tape runs from 6 h before midnight to 6 h after the next one, so the
+// screen is always covered while it wraps; scripts/scrubber.ts keeps the
+// current time under the needle. Ticks are two paths, not hundreds of lines.
 const HOUR = 64; // px per hour
-const DAYS = 3;
-const DAY = HOUR * 24;
+const PAD = 6; // hours of tape either side of the day
+const FROM = -PAD;
+const TO = 24 + PAD;
+const W = (TO - FROM) * HOUR;
 const H = 76;
+const xAt = (hours: number) => (hours - FROM) * HOUR;
 
-const ticks = Array.from({ length: DAYS * 96 }, (_, i) => {
-  const x = (i / 4) * HOUR;
-  const hour = i % 4 === 0;
-  const half = i % 2 === 0;
-  return { x, hour, len: hour ? 22 : half ? 13 : 8 };
-});
+let minor = '';
+let major = '';
+for (let q = FROM * 4; q <= TO * 4; q++) {
+  const x = xAt(q / 4).toFixed(1);
+  if (q % 4 === 0) major += `M${x},0V22`;
+  else minor += `M${x},0V${q % 2 === 0 ? 13 : 8}`;
+}
 
-const labels = Array.from({ length: DAYS * 24 }, (_, i) => ({
-  x: i * HOUR,
-  text: String(i % 24).padStart(2, '0'),
+const labels = Array.from({ length: TO - FROM + 1 }, (_, i) => ({
+  x: xAt(FROM + i),
+  text: String((((FROM + i) % 24) + 24) % 24).padStart(2, '0'),
 }));
 
-const phases = Array.from({ length: DAYS }, (_, d) =>
-  PHASES.map((p) => ({ x: d * DAY + ((p.start + p.end) / 2) * HOUR, name: p.name, edge: d * DAY + p.start * HOUR })),
-).flat();
+// Phase names and boundaries for every phase that touches the tape.
+const phases = [-1, 0, 1]
+  .flatMap((d) => PHASES.map((p) => ({ start: d * 24 + p.start, end: d * 24 + p.end, name: p.name })))
+  .filter((p) => p.end > FROM && p.start < TO)
+  .map((p) => ({ x: xAt((p.start + p.end) / 2), edge: xAt(p.start), name: p.name }));
 ---
 
-<div class="scrub" data-scrub style={`--hour: ${HOUR}px`}>
+<div class="scrub" data-scrub data-from={FROM} style={`--hour: ${HOUR}px`}>
   <div class="scrub__readout" aria-hidden="true">
     <span class="scrub__time" data-scrub-time>00:00</span>
     <span class="scrub__hint" data-scrub-hint>Drag the timeline</span>
@@ -43,9 +50,10 @@ const phases = Array.from({ length: DAYS }, (_, d) =>
     aria-valuetext="00:00"
     data-scrub-slider
   >
-    <svg class="scrub__tape" width={DAY * DAYS} height={H} viewBox={`0 0 ${DAY * DAYS} ${H}`} aria-hidden="true" data-scrub-tape>
+    <svg class="scrub__tape" width={W} height={H} viewBox={`0 0 ${W} ${H}`} aria-hidden="true" data-scrub-tape>
       {phases.map((p) => <line class="scrub__edge" x1={p.edge} y1="44" x2={p.edge} y2={H} />)}
-      {ticks.map((t) => <line class:list={['scrub__tick', { 'scrub__tick--hour': t.hour }]} x1={t.x} y1="0" x2={t.x} y2={t.len} />)}
+      <path class="scrub__tick" d={minor} />
+      <path class="scrub__tick scrub__tick--hour" d={major} />
       {
         labels.map((l) => (
           <text class="scrub__label" x={l.x} y="36">
@@ -132,6 +140,7 @@ const phases = Array.from({ length: DAYS }, (_, d) =>
   }
 
   .scrub__tick {
+    fill: none;
     stroke: var(--ink);
     stroke-opacity: 0.35;
     stroke-width: 1;

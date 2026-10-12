@@ -1,4 +1,3 @@
-import { Mesh, Program, Renderer, Triangle } from 'ogl';
 import type { RGB } from '../lib/palette';
 import type { Form } from '../lib/form';
 
@@ -10,10 +9,9 @@ import type { Form } from '../lib/form';
 
 const vertex = /* glsl */ `
   attribute vec2 position;
-  attribute vec2 uv;
   varying vec2 vUv;
   void main() {
-    vUv = uv;
+    vUv = position * 0.5 + 0.5;
     gl_Position = vec4(position, 0.0, 1.0);
   }
 `;
@@ -22,6 +20,7 @@ const fragment = /* glsl */ `
   precision highp float;
 
   uniform float uTime;
+  uniform float uOctaves;
   uniform float uBreath;
   uniform float uEnergy;
   uniform vec2 uRes;
@@ -112,6 +111,7 @@ const fragment = /* glsl */ `
     float v = 0.0;
     float a = 0.5;
     for (int i = 0; i < 4; i++) {
+      if (float(i) >= uOctaves) break;
       v += a * snoise(p);
       p *= 2.02;
       a *= 0.5;
@@ -247,55 +247,103 @@ export interface Sky {
   destroy(): void;
 }
 
+type UniformValue = number | readonly number[];
+
 export function createSky(canvas: HTMLCanvasElement, reducedMotion: boolean): Sky | null {
-  let renderer: Renderer;
-  try {
-    renderer = new Renderer({ canvas, dpr: Math.min(window.devicePixelRatio, 1.5), antialias: false });
-  } catch {
-    return null;
-  }
-  const gl = renderer.gl;
+  // Plain WebGL: one triangle covering the screen needs no library, and this
+  // way no extensions are probed at start-up and the shader can compile in
+  // the background instead of blocking the page.
+  const gl = canvas.getContext('webgl', {
+    alpha: false,
+    antialias: false,
+    depth: false,
+    stencil: false,
+    premultipliedAlpha: false,
+    preserveDrawingBuffer: false,
+  });
   if (!gl) return null;
 
-  const program = new Program(gl, {
-    vertex,
-    fragment,
-    uniforms: {
-      uTime: { value: 0 },
-      uBreath: { value: 0 },
-      uEnergy: { value: 0 },
-      uRes: { value: [1, 1] },
-      uFocus: { value: [0, 0] },
-      uBg: { value: [0, 0, 0] },
-      uGlow: { value: [0, 0, 0] },
-      uAccent: { value: [0, 0, 0] },
-      uForm: { value: 0 },
-      uRadius: { value: 0.26 },
-      uSquash: { value: 1 },
-      uSag: { value: 0 },
-      uRise: { value: 0 },
-      uSharp: { value: 0.4 },
-      uRings: { value: 0 },
-      uRays: { value: 0 },
-      uOrbit: { value: 0 },
-      uHalo: { value: 0 },
-      uDissolve: { value: 0 },
-      uStars: { value: 0 },
-      uBreathDepth: { value: 0.3 },
-    },
-  });
-  const mesh = new Mesh(gl, { geometry: new Triangle(gl), program });
+  const compile = (type: number, source: string) => {
+    const shader = gl.createShader(type)!;
+    gl.shaderSource(shader, source);
+    gl.compileShader(shader);
+    return shader;
+  };
+  const vs = compile(gl.VERTEX_SHADER, vertex);
+  const fs = compile(gl.FRAGMENT_SHADER, fragment);
+  const program = gl.createProgram()!;
+  gl.attachShader(program, vs);
+  gl.attachShader(program, fs);
+  gl.bindAttribLocation(program, 0, 'position');
+  gl.linkProgram(program);
+  // With this extension the driver compiles off the main thread and we poll
+  // for completion each frame; without it, the first status check waits.
+  const parallel = gl.getExtension('KHR_parallel_shader_compile') as { COMPLETION_STATUS_KHR: number } | null;
 
+  const buffer = gl.createBuffer();
+  gl.bindBuffer(gl.ARRAY_BUFFER, buffer);
+  gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([-1, -1, 3, -1, -1, 3]), gl.STATIC_DRAW);
+  gl.enableVertexAttribArray(0);
+  gl.vertexAttribPointer(0, 2, gl.FLOAT, false, 0, 0);
+
+  const locations = new Map<string, WebGLUniformLocation | null>();
+  const setUniform = (name: string, value: UniformValue) => {
+    if (!locations.has(name)) locations.set(name, gl.getUniformLocation(program, name));
+    const loc = locations.get(name)!;
+    if (loc === null) return;
+    if (typeof value === 'number') gl.uniform1f(loc, value);
+    else if (value.length === 2) gl.uniform2f(loc, value[0], value[1]);
+    else gl.uniform3f(loc, value[0], value[1], value[2]);
+  };
+
+  // Resolution scale: the soft visuals hold up well below native resolution,
+  // and the scale drops further on devices that can't keep up (see adapt()).
+  const maxDpr = Math.min(window.devicePixelRatio, 1.5);
+  let quality = 0.85;
+  let octaves = 4;
   const resize = () => {
-    renderer.setSize(window.innerWidth, window.innerHeight);
-    program.uniforms.uRes.value = [gl.drawingBufferWidth, gl.drawingBufferHeight];
+    const scale = maxDpr * quality;
+    canvas.width = Math.max(1, Math.round(window.innerWidth * scale));
+    canvas.height = Math.max(1, Math.round(window.innerHeight * scale));
+    gl.viewport(0, 0, canvas.width, canvas.height);
   };
   resize();
   window.addEventListener('resize', resize);
 
+  // Frame-time watchdog: average frame time over a window; step quality down
+  // when frames run long, and once back up if there's plenty of headroom.
+  let frames = 0;
+  let total = 0;
+  let raised = false;
+  const adapt = (dt: number) => {
+    if (dt <= 0 || dt > 0.25) return; // skip tab switches and hiccups
+    frames++;
+    total += dt;
+    if (frames < 90) return;
+    const avg = total / frames;
+    frames = 0;
+    total = 0;
+    if (avg > 0.022 && quality > 0.45) {
+      quality = Math.max(0.45, quality - 0.15);
+    } else if (avg < 0.0135 && quality < 0.85 && !raised) {
+      raised = true; // only once, so it never oscillates
+      quality = Math.min(0.85, quality + 0.15);
+    } else return;
+    octaves = quality < 0.75 ? 3 : 4;
+    resize();
+  };
+
   let time = 7.3; // start mid-flow, not at the noise origin
   let failed = false;
+  let linked = false;
+  let ready = false;
   let breathPhase = 0;
+
+  const fail = () => {
+    failed = true;
+    canvas.classList.remove('is-ready'); // keep the CSS gradient
+  };
+  canvas.addEventListener('webglcontextlost', fail);
 
   return {
     render(state, dt) {
@@ -305,36 +353,47 @@ export function createSky(canvas: HTMLCanvasElement, reducedMotion: boolean): Sk
         time += dt * (0.35 + state.energy * 0.9);
         breathPhase += dt * Math.PI * 2 * (0.1 + state.energy * 0.12);
       }
-      const scale = gl.drawingBufferWidth / window.innerWidth;
-      const u = program.uniforms;
-      u.uTime.value = time;
-      u.uBreath.value = Math.sin(breathPhase);
-      u.uEnergy.value = state.energy;
-      u.uFocus.value = [state.focus[0] * scale, gl.drawingBufferHeight - state.focus[1] * scale];
-      u.uBg.value = state.bg;
-      u.uGlow.value = state.glow;
-      u.uAccent.value = state.accent;
+      if (!linked) {
+        if (parallel && !gl.getProgramParameter(program, parallel.COMPLETION_STATUS_KHR)) return;
+        if (!gl.getProgramParameter(program, gl.LINK_STATUS)) {
+          console.warn('Sky shader failed:', gl.getProgramInfoLog(program) || gl.getShaderInfoLog(fs));
+          fail();
+          return;
+        }
+        linked = true;
+        gl.useProgram(program);
+      }
+      adapt(dt);
+
+      const scale = canvas.width / window.innerWidth;
       const form = state.form;
-      u.uForm.value = state.formMix;
-      u.uRadius.value = form.radius;
-      u.uSquash.value = form.squash;
-      u.uSag.value = form.sag;
-      u.uRise.value = form.rise;
-      u.uSharp.value = form.sharp;
-      u.uRings.value = form.rings;
-      u.uRays.value = form.rays;
-      u.uOrbit.value = form.orbit;
-      u.uHalo.value = form.halo;
-      u.uDissolve.value = form.dissolve;
-      u.uStars.value = form.stars;
-      u.uBreathDepth.value = form.breath;
-      try {
-        renderer.render({ scene: mesh });
-      } catch {
-        // A shader that fails on this device: fall back to the CSS gradient.
-        failed = true;
-        canvas.width = 0;
-        canvas.height = 0;
+      setUniform('uTime', time);
+      setUniform('uOctaves', octaves);
+      setUniform('uBreath', Math.sin(breathPhase));
+      setUniform('uEnergy', state.energy);
+      setUniform('uRes', [canvas.width, canvas.height]);
+      setUniform('uFocus', [state.focus[0] * scale, canvas.height - state.focus[1] * scale]);
+      setUniform('uBg', state.bg);
+      setUniform('uGlow', state.glow);
+      setUniform('uAccent', state.accent);
+      setUniform('uForm', state.formMix);
+      setUniform('uRadius', form.radius);
+      setUniform('uSquash', form.squash);
+      setUniform('uSag', form.sag);
+      setUniform('uRise', form.rise);
+      setUniform('uSharp', form.sharp);
+      setUniform('uRings', form.rings);
+      setUniform('uRays', form.rays);
+      setUniform('uOrbit', form.orbit);
+      setUniform('uHalo', form.halo);
+      setUniform('uDissolve', form.dissolve);
+      setUniform('uStars', form.stars);
+      setUniform('uBreathDepth', form.breath);
+      gl.drawArrays(gl.TRIANGLES, 0, 3);
+
+      if (!ready) {
+        ready = true;
+        canvas.classList.add('is-ready'); // fade in over the CSS gradient
       }
     },
     destroy() {

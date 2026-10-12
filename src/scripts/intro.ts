@@ -38,7 +38,10 @@ export function playIntro(
   gsap.set(parts.title, { autoAlpha: 1 });
   html.classList.remove('intro'); // GSAP owns visibility from here
 
-  const titleSplit = SplitText.create(parts.titleText, { type: 'words', mask: 'words' });
+  // The words were split in the markup and animated in by CSS from the first
+  // paint; the timeline picks up once that has had time to finish.
+  const words = [...parts.titleText.querySelectorAll<HTMLElement>('.intro-title__word')];
+  const shown = Math.max(0, 1.45 - performance.now() / 1000);
   let nameSplit: SplitText | null = null;
   let outro: gsap.core.Timeline | null = null;
 
@@ -47,7 +50,6 @@ export function playIntro(
     window.removeEventListener('keydown', skip, true);
     window.removeEventListener('wheel', skip, true);
     outro?.progress(1).kill();
-    titleSplit.revert();
     nameSplit?.revert();
     parts.title.remove();
     gsap.set([...hidden, parts.plot, parts.handle, ...parts.ticks, ...parts.labels], { clearProps: 'all' });
@@ -57,8 +59,7 @@ export function playIntro(
   const tl = gsap.timeline({ onComplete: finish });
 
   // 1. "Your body keeps time."
-  tl.from(titleSplit.words, { yPercent: 110, duration: 0.9, ease: 'expo.out', stagger: 0.07 })
-    .to(titleSplit.words, { yPercent: -110, duration: 0.55, ease: 'expo.in', stagger: 0.04 }, '+=0.45');
+  tl.to(words, { yPercent: -115, duration: 0.55, ease: 'expo.in', stagger: 0.04 }, shown);
 
   // 2. The dial assembles: ticks sweep in clockwise, then the hour labels.
   tl.fromTo(parts.dial, { autoAlpha: 0, scale: 0.9 }, { autoAlpha: 1, scale: 1, duration: 1.4, ease: 'expo.out' }, '-=0.25')

@@ -67,11 +67,12 @@ Everything between today's prototype and an Awwwards submission. Ordered by prio
 
 ## 5. Performance
 
-- [ ] **P0** Lighthouse: Performance ≥ 90 on mobile, Accessibility 100, Best Practices 100, SEO 100
-- [ ] **P0** Test the shader on a low-end Android phone; add a quality fallback (lower resolution, fewer noise octaves)
-- [ ] **P1** Pause the shader when the tab is hidden or the canvas is off-screen
-- [ ] **P1** Preload the display font; subset fonts to the characters used
-- [ ] **P1** Check bundle size (GSAP plugins, OGL) and lazy-load what isn't needed on first paint
+- [x] Performance pass: mobile 57 → 82, desktop → 84 (local build, software GPU); Accessibility, Best Practices, SEO all 100
+- [ ] **P0** Lighthouse on the live Vercel URL (PageSpeed Insights), mobile ≥ 90: check real-device numbers before deciding on more work
+- [x] Adaptive shader quality (resolution and noise detail drop when frames run long)
+- [ ] **P0** Test the shader on a low-end Android phone to confirm the adaptive quality kicks in
+- [x] Display font subset and both fonts preloaded
+- [x] Bundle: OGL removed, journey lazy-loaded (initial JS 256 → 148 KB, 57 KB gzipped)
 - [ ] **P2** Respect `prefers-reduced-data`
 
 ## 6. Accessibility

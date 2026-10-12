@@ -186,32 +186,37 @@ export function createJourney(root: HTMLElement, { reducedMotion, onBack }: Opti
   });
 
   // --- Reveals ---------------------------------------------------------------
+  // Opacity only (never visibility), so headings stay in the accessibility
+  // tree before they're revealed; titles are split into letters only when
+  // they come into view, keeping start-up light.
 
   if (!reducedMotion) {
     for (const block of root.querySelectorAll<HTMLElement>('[data-reveal]')) {
-      gsap.set(block, { autoAlpha: 0, y: 24 });
+      gsap.set(block, { opacity: 0, y: 24 });
       ScrollTrigger.create({
         trigger: block,
         start: 'top 80%',
         once: true,
-        onEnter: () => gsap.to(block, { autoAlpha: 1, y: 0, duration: 1, ease: 'power3.out' }),
+        onEnter: () => gsap.to(block, { opacity: 1, y: 0, duration: 1, ease: 'power3.out', clearProps: 'transform' }),
       });
     }
     for (const name of root.querySelectorAll<HTMLElement>('[data-reveal-name]')) {
-      const split = SplitText.create(name, { type: 'chars', mask: 'chars' });
-      gsap.set(split.chars, { yPercent: 110 });
+      gsap.set(name, { opacity: 0 });
       ScrollTrigger.create({
         trigger: name,
         start: 'top 85%',
         once: true,
-        onEnter: () =>
-          gsap.to(split.chars, {
-            yPercent: 0,
+        onEnter: () => {
+          const split = SplitText.create(name, { type: 'chars', mask: 'chars' });
+          gsap.set(name, { opacity: 1 });
+          gsap.from(split.chars, {
+            yPercent: 110,
             duration: 1.1,
             ease: 'expo.out',
             stagger: 0.025,
             onComplete: () => split.revert(),
-          }),
+          });
+        },
       });
     }
   }

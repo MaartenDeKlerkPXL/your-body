@@ -1,7 +1,7 @@
 import { gsap } from 'gsap';
 import { Draggable } from 'gsap/Draggable';
 import { InertiaPlugin } from 'gsap/InertiaPlugin';
-import { MINUTES_PER_DAY, formatTime, wrapMinutes } from '../lib/time';
+import { formatTime, wrapMinutes } from '../lib/time';
 import type { Dial } from './dial';
 
 gsap.registerPlugin(Draggable, InertiaPlugin);
@@ -39,8 +39,12 @@ export function createScrubber(root: HTMLElement, { dial, reducedMotion, onUserI
 
   const hour = parseFloat(getComputedStyle(root).getPropertyValue('--hour')) || 64;
   const ppm = hour / 60; // px per minute
-  const day = MINUTES_PER_DAY * ppm;
+  // Where midnight sits on the tape (it starts a few hours before it).
+  const midnight = -Number(root.dataset.from ?? 0) * hour;
 
+  // Shown on phones only (CSS); track it with the same media query instead of
+  // asking for layout every frame.
+  const phone = window.matchMedia('(max-width: 719px)');
   let width = viewport.clientWidth;
   window.addEventListener('resize', () => {
     width = viewport.clientWidth;
@@ -82,12 +86,13 @@ export function createScrubber(root: HTMLElement, { dial, reducedMotion, onUserI
   let lastLive: boolean | null = null;
 
   return {
-    visible: () => root.offsetParent !== null,
+    visible: () => phone.matches,
 
     update(minutes, live) {
-      if (root.offsetParent === null) return; // hidden on wide screens
-      // Middle copy of the day under the needle.
-      const x = width / 2 - (day + minutes * ppm) + offset;
+      if (!phone.matches) return; // hidden on wide screens
+      if (width === 0) width = viewport.clientWidth;
+      // The current time under the needle.
+      const x = width / 2 - (midnight + minutes * ppm) + offset;
       tape.style.transform = `translate3d(${x.toFixed(1)}px, 0, 0)`;
 
       const minute = Math.floor(minutes);

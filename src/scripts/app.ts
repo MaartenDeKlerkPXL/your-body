@@ -6,9 +6,9 @@ import { paletteAt, rgbToHex, luminance } from '../lib/palette';
 import { formatTime, nowMinutes, parseTime } from '../lib/time';
 import { createDial } from './dial';
 import { createScrubber } from './scrubber';
-import { createSky } from './sky';
+import { createSky, type Sky } from './sky';
 import { playIntro } from './intro';
-import { createJourney } from './journey';
+import type { Journey } from './journey';
 import { formAt } from '../lib/form';
 import { displayAxes } from '../lib/type';
 
@@ -72,7 +72,14 @@ export function start() {
   });
   // Whichever control the layout shows: the dial, or the timeline on phones.
   const clockEl = () => (scrubber.visible() ? scrubEl : dialEl);
-  const sky = createSky($<HTMLCanvasElement>('[data-sky]'), reducedMotion);
+  // The shader compiles after the first paint, so text shows straight away;
+  // until then (or if WebGL is missing) the CSS gradient stands in.
+  let sky: Sky | null = null;
+  requestAnimationFrame(() =>
+    window.setTimeout(() => {
+      sky = createSky($<HTMLCanvasElement>('[data-sky]'), reducedMotion);
+    }, 0),
+  );
 
   // If nobody has touched the dial after a few seconds, the knob wiggles
   // along the ring once to show it can be dragged.
@@ -106,7 +113,7 @@ export function start() {
         title: $('[data-intro-title]'),
         titleText: $('[data-intro-title-text]'),
         dial: onPhone ? scrubEl : dialEl,
-        ticks: [...(onPhone ? scrubEl.querySelectorAll('.scrub__tick') : dialEl.querySelectorAll('.dial__tick'))],
+        ticks: [...(onPhone ? scrubEl.querySelectorAll('.scrub__tick, .scrub__edge') : dialEl.querySelectorAll('.dial__tick'))],
         labels: [...(onPhone ? scrubEl.querySelectorAll('.scrub__label') : dialEl.querySelectorAll('.dial__label'))],
         handle: onPhone ? $('[data-scrub-needle]') : handle,
         chrome: [...document.querySelectorAll<HTMLElement>('[data-intro-chrome]')],
@@ -208,23 +215,39 @@ export function start() {
 
   const vars = new Map<string, string>();
   const setVar = (name: string, value: string) => {
-    if (vars.get(name) === value) return;
+    if (vars.get(name) === value) return false;
     vars.set(name, value);
     root.style.setProperty(name, value);
+    return true;
   };
+  // Changing a custom property on :root restyles the whole page, so the CSS
+  // palette updates about ten times a second; the shader still gets every frame.
+  const CSS_INTERVAL = 100;
+  let lastCss = -Infinity;
+  let lastDraw = '';
 
   let lastMinute = -1;
   let lastLive: boolean | null = null;
   let lastPhase = '';
 
-  const journey = createJourney($('[data-journey]'), {
-    reducedMotion,
-    onBack: () => {
-      setLive(true);
-      dial.set(nowMinutes(), true);
-      history.replaceState(null, '', location.pathname);
-    },
-  });
+  // The journey (Lenis, ScrollTrigger, reveals) loads as its own chunk once the
+  // browser is idle: it lives below the fold and isn't needed for first paint.
+  let journey: Journey | null = null;
+  const startJourney = () =>
+    import('./journey').then(({ createJourney }) => {
+      journey = createJourney($('[data-journey]'), {
+        reducedMotion,
+        onBack: () => {
+          setLive(true);
+          dial.set(nowMinutes(), true);
+          history.replaceState(null, '', location.pathname);
+        },
+      });
+    });
+  // Safari has no requestIdleCallback; fall back to a short timeout there.
+  const idle = window.requestIdleCallback as typeof window.requestIdleCallback | undefined;
+  if (idle) idle.call(window, startJourney, { timeout: 1500 });
+  else setTimeout(startJourney, 400);
 
   // The glow drifts between the dial and the journey's stage instead of jumping.
   let focusX = window.innerWidth * 0.7;
@@ -236,7 +259,7 @@ export function start() {
     const minutes = dial.minutes();
     // The sky follows the scroll while travelling through the journey,
     // the dial (and everything around it) keeps its own time.
-    const scrolled = journey.minutes(minutes);
+    const scrolled = journey ? journey.minutes(minutes) : null;
     const shown = scrolled ?? minutes;
     const palette = paletteAt(shown);
     const energy = curveValue('alertness', shown);
@@ -252,17 +275,24 @@ export function start() {
     focusY += (targetY - focusY) * ease;
     formMix += ((scrolled === null ? 0 : 1) - formMix) * (reducedMotion ? 1 : Math.min(1, deltaMs / 400));
 
-    setVar('--bg', bg);
-    setVar('--glow', rgbToHex(palette.glow));
-    setVar('--accent', rgbToHex(palette.accent));
-    setVar('--ink', rgbToHex(palette.ink));
-    setVar('--ink-muted', rgbToHex(palette.inkMuted));
-    setVar('--invert', luminance(palette.bg) > 0.18 ? '0' : '1');
-    themeMeta?.setAttribute('content', bg);
+    const now = performance.now();
+    if (now - lastCss >= CSS_INTERVAL) {
+      lastCss = now;
+      if (setVar('--bg', bg)) themeMeta?.setAttribute('content', bg);
+      setVar('--glow', rgbToHex(palette.glow));
+      setVar('--accent', rgbToHex(palette.accent));
+      setVar('--ink', rgbToHex(palette.ink));
+      setVar('--ink-muted', rgbToHex(palette.inkMuted));
+      setVar('--invert', luminance(palette.bg) > 0.18 ? '0' : '1');
+    }
 
-    progress.style.strokeDasharray = `${minutes.toFixed(1)} 1440`;
-    playhead.setAttribute('x1', minutes.toFixed(1));
-    playhead.setAttribute('x2', minutes.toFixed(1));
+    const draw = minutes.toFixed(1);
+    if (draw !== lastDraw) {
+      lastDraw = draw;
+      progress.style.strokeDasharray = `${draw} 1440`;
+      playhead.setAttribute('x1', draw);
+      playhead.setAttribute('x2', draw);
+    }
 
     sky?.render(
       {
@@ -276,7 +306,7 @@ export function start() {
       },
       Math.min(deltaMs, 100) / 1000,
     );
-    journey.update(scrolled);
+    journey?.update(scrolled);
     scrubber.update(minutes, live);
 
     const minute = Math.floor(minutes);
