@@ -44,6 +44,8 @@ export function start() {
   const announcer = $('[data-announce]');
   const themeMeta = document.querySelector<HTMLMetaElement>('meta[name="theme-color"]');
   const trendEls = CURVES.map((c) => ({ id: c.id, el: $(`[data-trend="${c.id}"]`) }));
+  const tableRows = [...document.querySelectorAll<HTMLElement>('[data-curves-row]')];
+  let currentRow: HTMLElement | null = null;
 
   // Set by an inline script in the page before first paint (see index.astro).
   let intro = root.classList.contains('intro');
@@ -359,6 +361,13 @@ export function start() {
       handle.setAttribute('aria-valuetext', time);
       if (document.activeElement !== jumpInput) jumpInput.value = time;
       for (const t of trendEls) t.el.textContent = TREND_LABELS[curveTrend(t.id, minutes)];
+      // Mark the table row covering the time the clock shows.
+      const row = tableRows[Math.min(tableRows.length - 1, Math.floor(minute / 180))] ?? null;
+      if (row !== currentRow) {
+        currentRow?.removeAttribute('aria-current');
+        row?.setAttribute('aria-current', 'time');
+        currentRow = row;
+      }
       if (!live && !intro && lastLive !== null) syncUrl(minutes);
       lastMinute = minute;
       lastLive = live;

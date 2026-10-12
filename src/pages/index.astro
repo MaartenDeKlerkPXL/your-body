@@ -205,6 +205,12 @@ const first = PHASES[0];
     color: var(--ink);
   }
 
+  /* Grid children may shrink below their content, so a wide table or tape
+     scrolls inside itself and never widens the page. */
+  .page > * {
+    min-width: 0;
+  }
+
   .top {
     display: flex;
     justify-content: space-between;

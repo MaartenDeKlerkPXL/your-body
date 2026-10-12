@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { formatTime, parseTime, shortestDelta, wrapMinutes } from '../src/lib/time';
-import { curveValue, curveTrend } from '../src/lib/circadian';
+import { curveValue, curveTrend, describeCurve, levelLabel } from '../src/lib/circadian';
 import { contrast, paletteAt } from '../src/lib/palette';
 import { PHASES, phaseAt } from '../src/content/phases';
 import { SOURCES } from '../src/content/sources';
@@ -147,5 +147,33 @@ describe('ambient sound', () => {
 
   it('tunes A4 to 440 Hz', () => {
     expect(midiToHz(69)).toBe(440);
+  });
+});
+
+describe('curve descriptions', () => {
+  it('describes alertness with two peaks and an afternoon dip', () => {
+    const d = describeCurve('alertness');
+    // Its low is either a point or a stretch that ends in the early morning.
+    expect(d).toMatch(/^Alertness (is lowest around 0[3-5]:\d\d|stays low from about \d\d:\d\d to 0[3-5]:\d\d)/);
+    expect(d).toMatch(/peaks around 1[01]:\d\d/);
+    expect(d).toMatch(/dips around 1[34]:\d\d/);
+    expect(d).toMatch(/peaks again around 1[78]:\d\d/);
+  });
+
+  it('puts the melatonin peak in the small hours and keeps it low by day', () => {
+    expect(describeCurve('melatonin')).toMatch(/stays low from about 0[6-9]:\d\d to 2[01]:\d\d/);
+    expect(describeCurve('melatonin')).toMatch(/peaks around 0[2-4]:\d\d/);
+  });
+
+  it('puts the temperature low before dawn and the high in the evening', () => {
+    const d = describeCurve('temperature');
+    expect(d).toMatch(/lowest around 0[4-5]:\d\d/);
+    expect(d).toMatch(/(peaks|highest) around 1[7-9]:\d\d/);
+  });
+
+  it('labels levels in words', () => {
+    expect(levelLabel(0.05)).toBe('very low');
+    expect(levelLabel(0.5)).toBe('moderate');
+    expect(levelLabel(0.95)).toBe('very high');
   });
 });

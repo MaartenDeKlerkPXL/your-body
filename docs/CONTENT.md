@@ -23,7 +23,7 @@ De curves zijn **gestileerd**: ze tonen *wanneer* iets stijgt en daalt, niet ech
 | Melatonine | stijgt 2–3 u vóór de gewone slaaptijd (DLMO), piek in de vroege ochtenduren, terug laag rond het ontwaken | [1], [2] | ✅ |
 | Cortisol | stijgt in de late nacht, piek kort na het ontwaken (~08:30 in de klok), dieptepunt rond middernacht | [6], [7], [8] | ✅ |
 | Kerntemperatuur | minimum in de vroege ochtend vóór het ontwaken, maximum laat in de namiddag / vroege avond | [9], [10] | 🟡 exacte uren |
-| Alertheid | piek late ochtend, dip vroege namiddag, tweede piek vroege avond, "verboden zone" voor slaap enkele uren vóór bedtijd | [12], [13], [14], [15] | ✅ |
+| Alertheid | laagst in de vroege ochtend (volgt de kerntemperatuur), steile stijging na het ontwaken (slaapinertie), piek late ochtend, dip vroege namiddag, tweede piek vroege avond, "verboden zone" voor slaap enkele uren vóór bedtijd | [12], [13], [14], [15], [16] | ✅ |
 
 ---
 
@@ -88,6 +88,8 @@ De curves zijn **gestileerd**: ze tonen *wanneer* iets stijgt en daalt, niet ech
 |---|---|---|
 | Licht is de belangrijkste tijdgever van de klok; chronotype verschuift de patronen | [24], [15] | ✅ |
 | Outro: "Light, meals, movement and a regular bedtime keep it on time." | [24], [5], [23] | ✅ NIGMS noemt licht, voedselinname en fysieke activiteit als factoren die het ritme beïnvloeden |
+
+De tekstversie van de grote curves (beschrijving voor schermlezers en de tabel "Show as table") wordt automatisch uit hetzelfde model afgeleid, zodat tekst en grafiek nooit uit elkaar lopen.
 
 De trendwoorden per hoofdstuk ("rising", "falling"…) komen uit het gestileerde model hierboven, berekend op het midden van elke fase.
 

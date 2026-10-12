@@ -1,5 +1,6 @@
 ---
-import { CURVES, sampleCurve, type CurveId } from '../lib/circadian';
+import { CURVES, TREND_LABELS, curveTrend, curveValue, describeCurve, levelLabel, sampleCurve, type CurveId } from '../lib/circadian';
+import { formatTime } from '../lib/time';
 
 // Drawn once at build time; only the playhead moves at runtime.
 const W = 1440;
@@ -13,6 +14,22 @@ const STYLE: Record<CurveId, string> = {
   melatonin: 'curve--melatonin',
 };
 
+// Text alternatives: a description of every curve's shape (from the model, so
+// it always matches the chart) and a table every three hours.
+const summary = CURVES.map((c) => describeCurve(c.id)).join(' ');
+const rows = Array.from({ length: 8 }, (_, i) => {
+  const m = i * 180;
+  return {
+    m,
+    time: formatTime(m),
+    // The level is already in words, so a flat stretch reads "steady", not "low, low".
+    cells: CURVES.map((c) => {
+      const trend = curveTrend(c.id, m);
+      return { level: levelLabel(curveValue(c.id, m)), trend: trend === 'low' ? 'steady' : TREND_LABELS[trend] };
+    }),
+  };
+});
+
 const paths = CURVES.map((c) => ({
   ...c,
   className: STYLE[c.id],
@@ -22,7 +39,8 @@ const paths = CURVES.map((c) => ({
 }));
 ---
 
-<figure class="curves" data-curves>
+<figure class="curves" aria-label="Your daily rhythm: four curves over 24 hours" aria-describedby="curves-summary" data-curves>
+  <p class="visually-hidden" id="curves-summary">{summary}</p>
   <figcaption class="curves__legend">
     <ul>
       {
@@ -51,6 +69,36 @@ const paths = CURVES.map((c) => ({
       <span>00</span><span>06</span><span>12</span><span>18</span><span>24</span>
     </div>
   </div>
+
+  <details class="curves__data">
+    <summary>Show as table</summary>
+    <div class="curves__scroll">
+      <table>
+        <caption class="visually-hidden">Relative level and direction of each rhythm, every three hours</caption>
+        <thead>
+          <tr>
+            <th scope="col">Time</th>
+            {CURVES.map((c) => <th scope="col">{c.label}</th>)}
+          </tr>
+        </thead>
+        <tbody>
+          {
+            rows.map((r) => (
+              <tr data-curves-row={r.m}>
+                <th scope="row">{r.time}</th>
+                {r.cells.map((c) => (
+                  <td>
+                    <span class="curves__level">{c.level}</span>
+                    <span class="curves__dir">{c.trend}</span>
+                  </td>
+                ))}
+              </tr>
+            ))
+          }
+        </tbody>
+      </table>
+    </div>
+  </details>
 </figure>
 
 <style>
@@ -58,6 +106,11 @@ const paths = CURVES.map((c) => ({
     margin: 0;
     display: grid;
     gap: var(--space-3);
+    min-width: 0; /* let the table scroll in its own box instead of widening the page */
+  }
+
+  .curves > * {
+    min-width: 0;
   }
 
   .curves__legend ul {
@@ -126,6 +179,81 @@ const paths = CURVES.map((c) => ({
     stroke: var(--ink);
     stroke-width: 1;
     stroke-opacity: 0.5;
+  }
+
+  /* --- Table view ------------------------------------------------------- */
+  .curves__data summary {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--space-2);
+    min-height: 32px;
+    font-size: var(--text-sm);
+    font-weight: 600;
+    cursor: pointer;
+    list-style: none;
+  }
+
+  .curves__data summary::-webkit-details-marker {
+    display: none;
+  }
+
+  .curves__data summary::before {
+    content: '';
+    width: 7px;
+    height: 7px;
+    border-right: 1.5px solid currentColor;
+    border-bottom: 1.5px solid currentColor;
+    rotate: -45deg;
+    transition: rotate var(--duration-micro) var(--ease-out);
+  }
+
+  .curves__data[open] summary::before {
+    rotate: 45deg;
+  }
+
+  /* Wide tables scroll inside their own box, never the page. */
+  .curves__scroll {
+    overflow-x: auto;
+    margin-top: var(--space-2);
+  }
+
+  .curves__data table {
+    width: 100%;
+    min-width: 34rem;
+    border-collapse: collapse;
+    font-size: var(--text-sm);
+    font-variant-numeric: tabular-nums;
+  }
+
+  .curves__data th,
+  .curves__data td {
+    padding: var(--space-2) var(--space-3);
+    text-align: left;
+    vertical-align: top;
+    border-bottom: 1px solid color-mix(in oklab, var(--ink) 15%, transparent);
+  }
+
+  .curves__data thead th {
+    color: var(--ink-muted);
+    font-weight: 600;
+  }
+
+  .curves__data tbody th {
+    font-weight: 600;
+  }
+
+  .curves__level {
+    display: block;
+  }
+
+  .curves__dir {
+    display: block;
+    color: var(--ink-muted);
+  }
+
+  /* The three hours the clock is showing. */
+  .curves__data tr[aria-current='time'] {
+    background: color-mix(in oklab, var(--ink) 7%, transparent);
   }
 
   .curves__axis {

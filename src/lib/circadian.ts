@@ -60,10 +60,16 @@ function temperature(h: number): number {
   return 0.5 + 0.5 * Math.cos((Math.PI * (t - rise)) / (24 - rise));
 }
 
-/** Alertness: late-morning peak, early-afternoon dip, second peak in the early evening. */
+/**
+ * Alertness: late-morning peak, early-afternoon dip, second peak in the early
+ * evening, and its lowest point in the early morning alongside core
+ * temperature, which it broadly tracks (Schmidt et al. 2007).
+ */
 function alertness(h: number): number {
-  const v = 0.95 * gauss(h, 10.5, 2.6) + 0.85 * gauss(h, 18, 2.4);
-  return clamp01(0.03 + v / 0.97);
+  // The morning rise is steep (it waits for waking and sleep inertia to clear),
+  // the decline after the late-morning peak gentler.
+  const v = 0.95 * skewedGauss(h, 10.5, 2, 2.8) + 0.85 * gauss(h, 18, 2.4);
+  return clamp01(0.88 * (0.03 + v / 0.97) + 0.12 * temperature(h));
 }
 
 const FUNCTIONS: Record<CurveId, (h: number) => number> = {
@@ -103,4 +109,91 @@ export function sampleCurve(id: CurveId, stepMinutes = 10): Array<[number, numbe
   const points: Array<[number, number]> = [];
   for (let m = 0; m <= 1440; m += stepMinutes) points.push([m, curveValue(id, m)]);
   return points;
+}
+
+/** A relative level in words, for tables and descriptions. */
+export function levelLabel(v: number): string {
+  if (v < 0.15) return 'very low';
+  if (v < 0.4) return 'low';
+  if (v < 0.65) return 'moderate';
+  if (v < 0.85) return 'high';
+  return 'very high';
+}
+
+const fmt = (m: number) => {
+  const q = Math.round(m / 15) * 15;
+  const w = ((q % 1440) + 1440) % 1440;
+  return `${String(Math.floor(w / 60)).padStart(2, '0')}:${String(w % 60).padStart(2, '0')}`;
+};
+
+/**
+ * A one-sentence description of a curve's shape over the day, derived from
+ * the model itself so it can never drift from the chart. Lists the turning
+ * points (peaks and troughs that stand out) in time order, starting from the
+ * lowest point of the day.
+ */
+export function describeCurve(id: CurveId): string {
+  const step = 5;
+  const n = 1440 / step;
+  const v = Array.from({ length: n }, (_, i) => curveValue(id, i * step));
+  const at = (i: number) => v[((i % n) + n) % n];
+
+  // Local extrema on the circular day, kept only if they stand out from the
+  // surrounding three hours by a clear margin.
+  const span = 180 / step;
+  const turns: Array<{ i: number; kind: 'peak' | 'trough' }> = [];
+  for (let i = 0; i < n; i++) {
+    let max = true;
+    let min = true;
+    for (let d = 1; d <= span; d++) {
+      if (at(i - d) >= v[i] || at(i + d) > v[i]) max = false;
+      if (at(i - d) <= v[i] || at(i + d) < v[i]) min = false;
+    }
+    const around = (at(i - span) + at(i + span)) / 2;
+    if (max && v[i] - around > 0.05) turns.push({ i, kind: 'peak' });
+    if (min && around - v[i] > 0.05) turns.push({ i, kind: 'trough' });
+  }
+
+  let lowest = 0;
+  v.forEach((x, i) => {
+    if (x < v[lowest]) lowest = i;
+  });
+  const highest = turns.filter((t) => t.kind === 'peak').sort((a, b) => v[b.i] - v[a.i])[0];
+
+  // A long, flat floor (melatonin by day, cortisol in the evening) reads as a
+  // stretch of time, not a single point that would suggest false precision.
+  const floor = v[lowest] + 0.025;
+  let from = lowest;
+  let to = lowest;
+  while (at(from - 1) < floor && (lowest - from + n) % n < n - 1) from--;
+  while (at(to + 1) < floor && (to - lowest + n) % n < n - 1) to++;
+  const flat = (to - from) * step >= 240;
+  const start = flat ? to : lowest;
+
+  // Order from the lowest point (or the end of the floor) onward.
+  const ordered = turns
+    .filter((t) => t.kind === 'peak' || !flat || (t.i - from + n) % n > to - from)
+    .filter((t) => t.i !== lowest)
+    .sort((a, b) => ((a.i - start + n) % n) - ((b.i - start + n) % n));
+  const parts = [
+    flat ? `stays low from about ${fmt(from * step)} to ${fmt(to * step)}` : `is lowest around ${fmt(lowest * step)}`,
+  ];
+  let peaks = 0;
+  for (const t of ordered) {
+    if (t.kind === 'peak') {
+      parts.push(peaks === 0 ? `peaks around ${fmt(t.i * step)}` : `peaks again around ${fmt(t.i * step)}`);
+      peaks++;
+    } else parts.push(`dips around ${fmt(t.i * step)}`);
+  }
+  // A plateau without a single standout point: still name the high.
+  if (!highest) {
+    let top = 0;
+    v.forEach((x, i) => {
+      if (x > v[top]) top = i;
+    });
+    parts.push(`is highest around ${fmt(top * step)}`);
+  }
+  const label = CURVES.find((c) => c.id === id)!.label;
+  const last = parts.pop()!;
+  return `${label} ${parts.length ? `${parts.join(', ')} and ${last}` : last}.`;
 }

@@ -81,7 +81,7 @@ Everything between today's prototype and an Awwwards submission. Ordered by prio
 - [ ] **P0** Full keyboard pass: every control reachable, visible focus everywhere
 - [ ] **P0** Screen reader test with VoiceOver (macOS/iOS) and NVDA (Windows)
 - [ ] **P0** 400% zoom test
-- [ ] **P1** Text alternative for the big curves in the first screen (the chapter mini charts already have one)
+- [x] Text alternative for the big curves: a description of each curve's shape derived from the model (for screen readers) and a "Show as table" view every three hours with the current row highlighted
 - [ ] **P1** Check colour contrast of non-text elements (curves, dial ticks) for 3:1
 
 ## 7. Cross-browser & device QA
