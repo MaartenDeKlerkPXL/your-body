@@ -4,6 +4,8 @@ import { SplitText } from 'gsap/SplitText';
 import Lenis from 'lenis';
 import { MINUTES_PER_DAY, formatTime, shortestDelta } from '../lib/time';
 import { phaseAt } from '../content/phases';
+import { CURVES, TREND_LABELS, curveTrend, curveValue, type CurveId } from '../lib/circadian';
+import { SPARK_H, sparkY } from '../lib/spark';
 
 gsap.registerPlugin(ScrollTrigger, SplitText);
 
@@ -41,12 +43,82 @@ export function createJourney(root: HTMLElement, { reducedMotion, onBack }: Opti
   const hudRail = root.querySelector<HTMLElement>('.hud__rail')!;
   const hudLinks = [...root.querySelectorAll<HTMLAnchorElement>('[data-hud-link]')];
 
-  const chapters = chapterEls.map((el) => ({
-    el,
-    start: Number(el.dataset.start) * 60,
-    end: Number(el.dataset.end) * 60,
-    range: { top: 0, height: 1 } as Range,
-  }));
+  const chapters = chapterEls.map((el) => {
+    const spark = el.querySelector<HTMLElement>('[data-spark]')!;
+    return {
+      el,
+      start: Number(el.dataset.start) * 60,
+      end: Number(el.dataset.end) * 60,
+      range: { top: 0, height: 1 } as Range,
+      spark: {
+        root: spark,
+        from: Number(spark.dataset.from),
+        span: Number(spark.dataset.span),
+        items: [...spark.querySelectorAll<HTMLElement>('[data-spark-item]')].map((item) => ({
+          id: item.dataset.sparkItem as CurveId,
+          plot: item.querySelector<HTMLElement>('.spark__plot')!,
+          playhead: item.querySelector<HTMLElement>('[data-spark-playhead]')!,
+          dot: item.querySelector<HTMLElement>('[data-spark-dot]')!,
+          cross: item.querySelector<HTMLElement>('[data-spark-cross]')!,
+        })),
+        tip: spark.querySelector<HTMLElement>('[data-spark-tip]')!,
+      },
+    };
+  });
+
+  // --- Mini charts ----------------------------------------------------------
+
+  type Chapter = (typeof chapters)[number];
+
+  /** Move a chapter's playheads and dots to a time inside its window. */
+  function drawSpark(c: Chapter, minutes: number) {
+    const f = Math.min(1, Math.max(0, (minutes - c.spark.from) / c.spark.span));
+    const left = `${(f * 100).toFixed(2)}%`;
+    for (const item of c.spark.items) {
+      item.playhead.style.left = left;
+      item.dot.style.left = left;
+      item.dot.style.top = `${((sparkY(curveValue(item.id, minutes)) / SPARK_H) * 100).toFixed(2)}%`;
+    }
+  }
+
+  // Hover: one crosshair through all four charts and one readout listing every
+  // curve at that time. Everything it shows is also in the chapter text.
+  for (const c of chapters) {
+    const { root: spark, tip } = c.spark;
+    const list = spark.querySelector<HTMLElement>('.spark__list')!;
+    list.addEventListener('pointermove', (event) => {
+      const plot = (event.target as HTMLElement).closest<HTMLElement>('.spark__plot');
+      if (!plot) return hide();
+      const r = plot.getBoundingClientRect();
+      const f = Math.min(1, Math.max(0, (event.clientX - r.left) / r.width));
+      const minutes = c.spark.from + f * c.spark.span;
+      for (const item of c.spark.items) item.cross.style.left = `${(f * 100).toFixed(2)}%`;
+      spark.classList.add('is-hover');
+
+      tip.replaceChildren();
+      const title = document.createElement('strong');
+      title.textContent = formatTime(minutes);
+      tip.append(title);
+      for (const curve of CURVES) {
+        const row = document.createElement('div');
+        const name = document.createElement('span');
+        const value = document.createElement('b');
+        name.textContent = curve.label;
+        value.textContent = TREND_LABELS[curveTrend(curve.id, minutes)];
+        row.append(name, value);
+        tip.append(row);
+      }
+      const box = spark.getBoundingClientRect();
+      tip.style.left = `${Math.min(box.width - 80, Math.max(80, event.clientX - box.left))}px`;
+      tip.style.top = `${r.top - box.top}px`;
+      tip.hidden = false;
+    });
+    list.addEventListener('pointerleave', hide);
+    function hide() {
+      spark.classList.remove('is-hover');
+      tip.hidden = true;
+    }
+  }
   let introRange: Range = { top: 0, height: 1 };
   let outroRange: Range = { top: 0, height: 1 };
 
@@ -54,7 +126,24 @@ export function createJourney(root: HTMLElement, { reducedMotion, onBack }: Opti
     const r = el.getBoundingClientRect();
     return { top: r.top + window.scrollY, height: Math.max(1, r.height) };
   };
+  // Chapters stick while their three hours pass, but never with part of the
+  // text hidden behind the bottom bar: on short screens the sticky offset
+  // shrinks, and a chapter taller than the screen simply scrolls.
+  const fitSticky = () => {
+    const vh = window.innerHeight;
+    const bottomSpace = window.innerWidth < 720 ? 84 : 32;
+    for (const c of chapters) {
+      const inner = c.el.querySelector<HTMLElement>('.chapter__inner')!;
+      inner.style.top = '';
+      inner.style.position = '';
+      const preferred = parseFloat(getComputedStyle(inner).top) || 0;
+      const fits = vh - bottomSpace - inner.offsetHeight;
+      if (fits < 12) inner.style.position = 'relative';
+      else if (fits < preferred) inner.style.top = `${fits}px`;
+    }
+  };
   const remeasure = () => {
+    fitSticky();
     introRange = measure(intro);
     outroRange = measure(outro);
     for (const c of chapters) c.range = measure(c.el);
@@ -178,6 +267,10 @@ export function createJourney(root: HTMLElement, { reducedMotion, onBack }: Opti
 
     // Only mark a phase while actually inside a chapter, not during the blends.
     const inChapters = y >= first && y < last.range.top + last.range.height;
+    if (inChapters) {
+      const c = chapters.find((ch) => y < ch.range.top + ch.range.height);
+      if (c) drawSpark(c, current);
+    }
     const phase = inChapters ? phaseAt(Math.min(current, MINUTES_PER_DAY - 1)).id : '';
     if (phase !== lastPhase) {
       for (const link of hudLinks) {

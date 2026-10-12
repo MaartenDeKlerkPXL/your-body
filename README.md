@@ -35,6 +35,7 @@ src/
   lib/palette.ts        kleur van de dag (OKLab), met gegarandeerd WCAG AA-contrast
   lib/form.ts           de vorm per fase (parameters voor de shader), met overgangen
   lib/type.ts           vaste letterdikte en -breedte per fase
+  lib/spark.ts          geometrie van de mini-grafieken per hoofdstuk
   lib/time.ts           tijdhulpjes
   scripts/app.ts        regie: frame-loop, fases, URL, live/verkenmodus
   scripts/dial.ts       24u-draaiknop (slepen, gooien, toetsenbord)

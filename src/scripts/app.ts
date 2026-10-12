@@ -246,7 +246,7 @@ export function start() {
     const [targetX, targetY] =
       scrolled === null
         ? [rect.left + rect.width / 2, rect.top + rect.height / 2]
-        : [window.innerWidth * (wide ? 0.72 : 0.5), window.innerHeight * (wide ? 0.5 : 0.19)];
+        : [window.innerWidth * (wide ? 0.72 : 0.5), window.innerHeight * (wide ? 0.5 : 0.15)];
     const ease = reducedMotion ? 1 : Math.min(1, deltaMs / 160);
     focusX += (targetX - focusX) * ease;
     focusY += (targetY - focusY) * ease;

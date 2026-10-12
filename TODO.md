@@ -19,6 +19,7 @@ Everything between today's prototype and an Awwwards submission. Ordered by prio
 - [x] Verified sources for every claim (`docs/CONTENT.md`), reference list on `/sources`, each chapter links its sources
 - [x] **"A day in your body"**: scroll-driven journey through all 8 phases. Scrolling moves the clock (sky, palette, type), sticky chapters, Lenis smooth scroll, progress rail (side on desktop, bottom bar on mobile) to jump between phases, "Back to now"
 - [x] Idle hint: the dial knob (or the phone timeline) wiggles once if nobody touches it
+- [x] **Mini charts per chapter**: four small multiples (alertness, temperature, cortisol, melatonin) over the phase's three hours plus context; a playhead and dot follow the scroll; hover shows a crosshair and one readout with all four; hidden text summary for screen readers
 - [x] **Phone timeline**: on screens under 720px the dial is replaced by a full-width tape you drag under a fixed needle (inertia, quarter-hour snap, endless wrap, phase names, keyboard, screen reader slider); vertical page scroll still works
 - [x] Deployed on Vercel
 - [x] **A form per phase**: one abstract body in the shader changes character through the day (soft breathing sphere with stars, flattened horizon, rising sun with rays, crisp focus rings, drooping drop, orbiting satellites and pulses, sunset halo, dissolving into dust), blending between phases while scrolling
@@ -59,7 +60,6 @@ Everything between today's prototype and an Awwwards submission. Ordered by prio
 
 ## 4. Features
 
-- [ ] **P1** Journey: scroll-scrubbed mini curve chart inside each chapter
 - [ ] **P1** Optional ambient sound per phase (off by default, clear on/off toggle, fades between phases)
 - [ ] **P1** "Share this moment": copy link to the current time
 - [ ] **P2** Personal mode: enter your own bedtime and wake time, and everything shifts
@@ -79,7 +79,7 @@ Everything between today's prototype and an Awwwards submission. Ordered by prio
 - [ ] **P0** Full keyboard pass: every control reachable, visible focus everywhere
 - [ ] **P0** Screen reader test with VoiceOver (macOS/iOS) and NVDA (Windows)
 - [ ] **P0** 400% zoom test
-- [ ] **P1** Text alternative for the curves (a short description or data table per phase)
+- [ ] **P1** Text alternative for the big curves in the first screen (the chapter mini charts already have one)
 - [ ] **P1** Check colour contrast of non-text elements (curves, dial ticks) for 3:1
 
 ## 7. Cross-browser & device QA

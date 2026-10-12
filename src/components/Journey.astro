@@ -1,18 +1,43 @@
 ---
 import { PHASES } from '../content/phases';
-import { CURVES, TREND_LABELS, curveTrend } from '../lib/circadian';
+import { CURVES, TREND_LABELS, curveTrend, curveValue } from '../lib/circadian';
 import { formatTime } from '../lib/time';
 import { displayAxesStyle } from '../lib/type';
+import { SPARK_CONTEXT, SPARK_H, SPARK_W, sparkY } from '../lib/spark';
 
 // Scrolling through this section is travelling through the day: the page's
 // clock follows the scroll position (see scripts/journey.ts).
+// Mini charts: each chapter shows its three hours with 1.5 h of context on
+// either side. Small multiples (one per curve) rather than four colours in one
+// plot, so identity is carried by labels, never by colour.
+const CONTEXT = SPARK_CONTEXT;
+
 const chapters = PHASES.map((p) => {
   const mid = ((p.start + p.end) / 2) * 60;
+  const from = p.start * 60 - CONTEXT;
+  const span = (p.end - p.start) * 60 + 2 * CONTEXT;
+  const x = (m: number) => ((m - from) / span) * SPARK_W;
   return {
     ...p,
     range: `${formatTime(p.start * 60)}–${p.end === 24 ? '24:00' : formatTime(p.end * 60)}`,
-    signals: CURVES.map((c) => ({ label: c.label, trend: TREND_LABELS[curveTrend(c.id, mid)] })),
     axes: displayAxesStyle(p),
+    from,
+    span,
+    band: { x: x(p.start * 60), w: x(p.end * 60) - x(p.start * 60) },
+    edges: [formatTime(p.start * 60), p.end === 24 ? '24:00' : formatTime(p.end * 60)],
+    sparks: CURVES.map((c) => {
+      const pts: string[] = [];
+      for (let m = from; m <= from + span; m += 5) pts.push(`${x(m).toFixed(1)},${sparkY(curveValue(c.id, m)).toFixed(1)}`);
+      const line = `M${pts.join(' L')}`;
+      return {
+        id: c.id,
+        label: c.label,
+        trend: TREND_LABELS[curveTrend(c.id, mid)],
+        line,
+        area: `${line} L${SPARK_W},${SPARK_H} L0,${SPARK_H} Z`,
+        start: sparkY(curveValue(c.id, p.start * 60)) / SPARK_H,
+      };
+    }),
   };
 });
 ---
@@ -55,16 +80,39 @@ const chapters = PHASES.map((p) => {
               <span class="chapter__tip-label">Try this</span>
               <span>{c.tip}</span>
             </p>
-            <dl class="chapter__signals">
-              {
-                c.signals.map((s) => (
-                  <div>
-                    <dt>{s.label}</dt>
-                    <dd>{s.trend}</dd>
-                  </div>
-                ))
-              }
-            </dl>
+            <div class="spark" data-spark data-from={c.from} data-span={c.span}>
+              <p class="visually-hidden">
+                How alertness, core temperature, cortisol and melatonin change from {c.edges[0]} to {c.edges[1]}:
+                {c.sparks.map((sp) => `${sp.label} ${sp.trend}.`).join(' ')}
+              </p>
+              <ul class="spark__list" aria-hidden="true">
+                {
+                  c.sparks.map((sp) => (
+                    <li class="spark__item" data-spark-item={sp.id}>
+                      <div class="spark__head">
+                        <span class="spark__label">{sp.label}</span>
+                        <span class="spark__trend">{sp.trend}</span>
+                      </div>
+                      <div class="spark__plot">
+                        <svg viewBox={`0 0 ${SPARK_W} ${SPARK_H}`} preserveAspectRatio="none">
+                          <rect class="spark__band" x={c.band.x} y="0" width={c.band.w} height={SPARK_H} />
+                          <path class="spark__area" d={sp.area} />
+                          <path class="spark__line" d={sp.line} vector-effect="non-scaling-stroke" />
+                        </svg>
+                        <span class="spark__head-line" data-spark-playhead style={`left: ${(c.band.x / SPARK_W) * 100}%`} />
+                        <span class="spark__dot" data-spark-dot style={`left: ${(c.band.x / SPARK_W) * 100}%; top: ${sp.start * 100}%`} />
+                        <span class="spark__cross" data-spark-cross />
+                      </div>
+                    </li>
+                  ))
+                }
+              </ul>
+              <div class="spark__axis" aria-hidden="true">
+                <span style={`left: ${(c.band.x / SPARK_W) * 100}%`}>{c.edges[0]}</span>
+                <span style={`left: ${((c.band.x + c.band.w) / SPARK_W) * 100}%`}>{c.edges[1]}</span>
+              </div>
+              <div class="spark__tip" role="presentation" data-spark-tip hidden></div>
+            </div>
             <p class="chapter__refs">
               Sources{' '}
               {c.refs.map((r, j) => (
@@ -246,28 +294,154 @@ const chapters = PHASES.map((p) => {
     color: var(--ink-muted);
   }
 
-  .chapter__signals {
-    margin: var(--space-2) 0 0;
-    display: grid;
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-    gap: var(--space-2) var(--space-4);
-    font-size: var(--text-sm);
+  /* --- Mini charts ---------------------------------------------------------- */
+
+  .spark {
+    position: relative;
+    margin-top: var(--space-2);
   }
 
-  .chapter__signals div {
+  .spark__list {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: var(--space-3) var(--space-4);
+  }
+
+  .spark__head {
     display: flex;
     justify-content: space-between;
     gap: var(--space-2);
-    padding-top: var(--space-2);
-    border-top: 1px solid color-mix(in oklab, var(--ink) 18%, transparent);
+    font-size: var(--text-sm);
+    margin-bottom: var(--space-1);
   }
 
-  .chapter__signals dt {
+  .spark__label {
     color: var(--ink-muted);
   }
 
-  .chapter__signals dd {
-    margin: 0;
+  .spark__trend {
+    font-weight: 600;
+  }
+
+  .spark__plot {
+    position: relative;
+    height: 44px;
+    cursor: crosshair;
+  }
+
+  .spark__plot svg {
+    display: block;
+    width: 100%;
+    height: 100%;
+    overflow: visible;
+  }
+
+  /* The phase's own three hours; the rest is context. */
+  .spark__band {
+    fill: var(--ink);
+    fill-opacity: 0.045;
+  }
+
+  .spark__area {
+    fill: var(--ink);
+    fill-opacity: 0.05;
+  }
+
+  .spark__line {
+    fill: none;
+    stroke: var(--ink);
+    stroke-width: 2;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+  }
+
+  /* Playhead and dot follow the scroll; positioned in % so the dot stays round. */
+  .spark__head-line,
+  .spark__cross {
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    width: 1px;
+    margin-left: -0.5px;
+    background: var(--ink);
+    opacity: 0.45;
+    pointer-events: none;
+  }
+
+  .spark__cross {
+    opacity: 0;
+    background: var(--ink);
+  }
+
+  .spark.is-hover .spark__cross {
+    opacity: 0.8;
+  }
+
+  .spark__dot {
+    position: absolute;
+    width: 10px;
+    height: 10px;
+    margin: -5px 0 0 -5px;
+    border-radius: 50%;
+    background: var(--accent);
+    box-shadow: 0 0 0 2px var(--bg);
+    pointer-events: none;
+  }
+
+  .spark__axis {
+    position: relative;
+    height: 1.25rem;
+    margin-top: var(--space-1);
+    font-size: 0.75rem;
+    font-variant-numeric: tabular-nums;
+    color: var(--ink-muted);
+  }
+
+  .spark__axis span {
+    position: absolute;
+    translate: -50% 0;
+  }
+
+  /* Same x scale in every chart: the axis sits under the left column. */
+  .spark__axis {
+    width: calc(50% - var(--space-4) / 2);
+  }
+
+  .spark__tip {
+    position: absolute;
+    z-index: 2;
+    min-width: 12.5rem;
+    padding: var(--space-2) var(--space-3);
+    border-radius: 10px;
+    background: var(--bg);
+    box-shadow:
+      0 0 0 1px color-mix(in oklab, var(--ink) 18%, transparent),
+      0 8px 24px color-mix(in oklab, #000 18%, transparent);
+    font-size: var(--text-sm);
+    pointer-events: none;
+    translate: -50% calc(-100% - 10px);
+  }
+
+  /* The readout's rows are built at runtime, so they need :global(). */
+  .spark__tip :global(strong) {
+    display: block;
+    font-variant-numeric: tabular-nums;
+    margin-bottom: var(--space-1);
+  }
+
+  .spark__tip :global(div) {
+    display: flex;
+    justify-content: space-between;
+    gap: var(--space-4);
+    white-space: nowrap;
+    color: var(--ink-muted);
+  }
+
+  .spark__tip :global(b) {
+    color: var(--ink);
     font-weight: 600;
   }
 
@@ -397,6 +571,23 @@ const chapters = PHASES.map((p) => {
 
   /* Phones: a slim bar along the bottom instead of a side rail. */
   @media (max-width: 719px) {
+    .chapter__inner {
+      top: 27svh;
+      gap: var(--space-3);
+    }
+
+    .chapter__copy {
+      gap: var(--space-2);
+    }
+
+    .spark__list {
+      gap: var(--space-2) var(--space-4);
+    }
+
+    .spark__plot {
+      height: 32px;
+    }
+
     .hud {
       top: auto;
       bottom: var(--space-3);
