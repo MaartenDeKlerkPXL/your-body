@@ -61,7 +61,9 @@ src/
   components/           Dial, Scrubber, Curves, Journey
   pages/                index, sources
 docs/
-  CONTENT.md            elke wetenschappelijke claim + bron die nog moet worden toegevoegd
+  CONTENT.md            elke wetenschappelijke claim met zijn bron
+  AWWWARDS.md           inzenddossier: teksten, checklist, video-draaiboek
+press/                  beeldmateriaal voor de inzending (thumbnails, screenshots)
 ```
 
 Wat er nog moet gebeuren staat in [`TODO.md`](TODO.md).

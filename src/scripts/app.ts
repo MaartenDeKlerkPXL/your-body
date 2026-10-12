@@ -249,7 +249,7 @@ export function start() {
     });
   // Ambient sound: the module is fetched when idle, so the first click can
   // start audio synchronously (Safari only allows that inside the gesture).
-  const soundButton = $<HTMLButtonElement>('[data-sound]');
+  const soundButtons = [...document.querySelectorAll<HTMLButtonElement>('[data-sound]')];
   let ambient: Ambient | null = null;
   let ambientModule: typeof import('./ambient') | null = null;
   const loadAmbient = () =>
@@ -257,12 +257,14 @@ export function start() {
       ambientModule = m;
       return m;
     });
-  soundButton.addEventListener('click', async () => {
-    const on = soundButton.getAttribute('aria-pressed') !== 'true';
-    soundButton.setAttribute('aria-pressed', String(on));
+  let soundOn = false;
+  const toggleSound = async () => {
+    soundOn = !soundOn;
+    for (const b of soundButtons) b.setAttribute('aria-pressed', String(soundOn));
     if (!ambient) ambient = (ambientModule ?? (await loadAmbient())).createAmbient();
-    ambient.setEnabled(on);
-  });
+    ambient.setEnabled(soundOn);
+  };
+  for (const b of soundButtons) b.addEventListener('click', toggleSound);
   const prefetch = () => {
     startJourney();
     loadAmbient();

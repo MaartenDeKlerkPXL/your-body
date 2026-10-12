@@ -94,11 +94,12 @@ Everything between today's prototype and an Awwwards submission. Ordered by prio
 
 ## 8. SEO & sharing
 
-- [ ] **P0** Open Graph image (1200×630) and Twitter card
-- [ ] **P0** Favicon set (SVG + PNG + apple-touch-icon) and web manifest
+- [x] Open Graph image (1200×630), Twitter card, canonical URL (from the Vercel production domain)
+- [x] Favicon set (SVG, apple-touch-icon, 512 px icon) and web manifest
 - [ ] **P1** Dynamic OG image per phase for shared `?t=` links
 - [ ] **P1** Structured data and a proper `<meta name="description">` per page
-- [ ] **P2** Sitemap and `robots.txt`
+- [x] `robots.txt` and a styled 404 page
+- [ ] **P2** Sitemap
 
 ## 9. Hosting & launch
 
@@ -110,11 +111,10 @@ Everything between today's prototype and an Awwwards submission. Ordered by prio
 ## 10. Awwwards submission
 
 - [ ] **P0** Final QA checklist complete (sections 5–7)
-- [ ] **P0** Submission assets:
-  - Cover image / screenshots (desktop + mobile, several times of day)
-  - Short video (15–30 s) of the intro and the dial
-  - Description in English: concept, the science, how it was built
-  - Credits (design, development, content review) and tags/technologies
+- [x] Submission kit in `docs/AWWWARDS.md`: copy for every form field, tags, technologies, colours, fonts, credits, pre-submission checklist
+- [x] Images in `press/`: five 1600×1200 thumbnail options, eight desktop and four phone screenshots
+- [ ] **P0** Record the 15–30 s video on a real machine (shot list in `docs/AWWWARDS.md`)
+- [ ] **P0** Confirm credits and attach a custom domain before submitting
 - [ ] **P1** Write a case study (Medium / portfolio) explaining concept, process and tech
 - [ ] **P1** Share before submitting to gather feedback and first visitors (LinkedIn, X, Reddit r/web_design, Dribbble)
 - [ ] **P1** Also submit to CSS Design Awards, FWA and Godly
