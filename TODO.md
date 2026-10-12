@@ -51,6 +51,7 @@ Everything between today's prototype and an Awwwards submission. Ordered by prio
 
 ## 3. Design
 
+- [ ] **P1** Listen to the ambient score on real speakers/headphones and tune levels per phase (measured levels are even, but taste needs ears)
 - [ ] **P1** Moodboard and final art direction: lock fonts, colour keyframes and imagery style
 - [ ] **P1** Illustration of the body that changes per phase (Rive or a shader-based abstract figure): sleeping, waking, focused, sluggish, active, winding down
 - [ ] **P1** Fine-tune the 24-hour palette on real screens (OLED phone, laptop, external monitor)
@@ -76,7 +77,6 @@ Everything between today's prototype and an Awwwards submission. Ordered by prio
 - [ ] **P2** Respect `prefers-reduced-data`
 
 ## 6. Accessibility
-- [ ] **P1** Listen to the ambient score on real speakers/headphones and tune levels per phase (measured levels are even, but taste needs ears)
 
 - [ ] **P0** Full keyboard pass: every control reachable, visible focus everywhere
 - [ ] **P0** Screen reader test with VoiceOver (macOS/iOS) and NVDA (Windows)
