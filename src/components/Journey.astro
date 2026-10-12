@@ -167,12 +167,13 @@ const chapters = PHASES.map((p) => {
     min-height: 170svh;
   }
 
+  /* The text holds one side; the other side is the stage for the phase's form,
+     drawn by the sky shader behind the page. */
   .chapter__inner {
     position: sticky;
-    top: 14svh;
+    top: 33svh;
     display: grid;
-    gap: var(--space-5);
-    padding-right: var(--space-6);
+    gap: var(--space-4);
   }
 
   .chapter__meta {
@@ -192,7 +193,7 @@ const chapters = PHASES.map((p) => {
   .chapter__name {
     margin: 0;
     font-family: var(--font-display);
-    font-size: clamp(3rem, 1rem + 9vw, 10rem);
+    font-size: clamp(3rem, 1rem + 6vw, 7.5rem);
     font-weight: var(--display-wght);
     font-stretch: var(--display-wdth);
     line-height: 0.9;
@@ -270,11 +271,9 @@ const chapters = PHASES.map((p) => {
 
   @media (min-width: 960px) {
     .chapter__inner {
-      grid-template-columns: minmax(0, 1.2fr) minmax(0, 1fr);
-      align-items: end;
-      top: 22svh;
-      /* Keep clear of the progress rail and its labels. */
-      padding-right: 10rem;
+      top: 16svh;
+      gap: var(--space-5);
+      max-width: min(48%, 44rem);
     }
   }
 
@@ -386,10 +385,6 @@ const chapters = PHASES.map((p) => {
 
   /* Phones: a slim bar along the bottom instead of a side rail. */
   @media (max-width: 719px) {
-    .chapter__inner {
-      padding-right: 0;
-    }
-
     .hud {
       top: auto;
       bottom: var(--space-3);

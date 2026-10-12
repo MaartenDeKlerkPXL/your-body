@@ -33,6 +33,7 @@ src/
   content/sources.ts    referentielijst (genummerd zoals docs/CONTENT.md)
   lib/circadian.ts      gestileerde 24u-curves: alertheid, temperatuur, cortisol, melatonine
   lib/palette.ts        kleur van de dag (OKLab), met gegarandeerd WCAG AA-contrast
+  lib/form.ts           de vorm per fase (parameters voor de shader), met overgangen
   lib/time.ts           tijdhulpjes
   scripts/app.ts        regie: frame-loop, fases, URL, live/verkenmodus
   scripts/dial.ts       24u-draaiknop (slepen, gooien, toetsenbord)

@@ -20,6 +20,7 @@ Everything between today's prototype and an Awwwards submission. Ordered by prio
 - [x] **"A day in your body"**: scroll-driven journey through all 8 phases. Scrolling moves the clock (sky, palette, type), sticky chapters, Lenis smooth scroll, progress rail (side on desktop, bottom bar on mobile) to jump between phases, "Back to now"
 - [x] Idle hint: the dial knob wiggles once if nobody touches it
 - [x] Deployed on Vercel
+- [x] **A form per phase**: one abstract body in the shader changes character through the day (soft breathing sphere with stars, flattened horizon, rising sun with rays, crisp focus rings, drooping drop, orbiting satellites and pulses, sunset halo, dissolving into dust), blending between phases while scrolling
 
 ---
 
@@ -52,11 +53,11 @@ Everything between today's prototype and an Awwwards submission. Ordered by prio
 - [ ] **P1** Fine-tune the 24-hour palette on real screens (OLED phone, laptop, external monitor)
 - [ ] **P1** Micro-interactions: dial hover state, magnetic knob, haptic-feeling snap
 - [ ] **P2** Custom cursor that shows the time when hovering over the dial
+- [ ] **P2** Show the current phase's form subtly behind the dial in the first screen too
 - [ ] **P2** Phase transition effect in the shader (a soft "pulse" when crossing into a new phase)
 
 ## 4. Features
 
-- [ ] **P1** Journey: per-chapter visual (illustration or shader state) so each phase has its own image, not only colour
 - [ ] **P1** Journey: scroll-scrubbed mini curve chart inside each chapter
 - [ ] **P1** Mobile: horizontal time scrubber at the bottom of the screen, thumb-friendly, in place of the large dial
 - [ ] **P1** Optional ambient sound per phase (off by default, clear on/off toggle, fades between phases)

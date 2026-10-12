@@ -8,6 +8,7 @@ import { createDial } from './dial';
 import { createSky } from './sky';
 import { playIntro } from './intro';
 import { createJourney } from './journey';
+import { formAt } from '../lib/form';
 
 gsap.registerPlugin(SplitText);
 
@@ -206,6 +207,7 @@ export function start() {
   // The glow drifts between the dial and the journey's stage instead of jumping.
   let focusX = window.innerWidth * 0.7;
   let focusY = window.innerHeight * 0.4;
+  let formMix = 0; // the phase's form fades in while travelling the journey
 
   gsap.ticker.add((_time, deltaMs) => {
     const rect = dialEl.getBoundingClientRect(); // read before any writes
@@ -222,10 +224,11 @@ export function start() {
     const [targetX, targetY] =
       scrolled === null
         ? [rect.left + rect.width / 2, rect.top + rect.height / 2]
-        : [window.innerWidth * (wide ? 0.72 : 0.5), window.innerHeight * (wide ? 0.45 : 0.3)];
+        : [window.innerWidth * (wide ? 0.72 : 0.5), window.innerHeight * (wide ? 0.5 : 0.19)];
     const ease = reducedMotion ? 1 : Math.min(1, deltaMs / 160);
     focusX += (targetX - focusX) * ease;
     focusY += (targetY - focusY) * ease;
+    formMix += ((scrolled === null ? 0 : 1) - formMix) * (reducedMotion ? 1 : Math.min(1, deltaMs / 400));
 
     setVar('--bg', bg);
     setVar('--glow', rgbToHex(palette.glow));
@@ -247,6 +250,8 @@ export function start() {
         accent: palette.accent,
         energy,
         focus: [focusX, focusY],
+        form: formAt(shown),
+        formMix,
       },
       Math.min(deltaMs, 100) / 1000,
     );

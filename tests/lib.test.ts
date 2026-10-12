@@ -4,6 +4,7 @@ import { curveValue, curveTrend } from '../src/lib/circadian';
 import { contrast, paletteAt } from '../src/lib/palette';
 import { PHASES, phaseAt } from '../src/content/phases';
 import { SOURCES } from '../src/content/sources';
+import { FORMS, formAt } from '../src/lib/form';
 
 describe('time', () => {
   it('wraps and formats', () => {
@@ -91,6 +92,28 @@ describe('phases', () => {
     for (const p of PHASES) {
       expect(p.refs.length).toBeGreaterThan(0);
       for (const r of p.refs) expect(ids.has(r)).toBe(true);
+    }
+  });
+});
+
+describe('forms', () => {
+  it('has one form per phase', () => {
+    expect(FORMS.length).toBe(PHASES.length);
+  });
+
+  it('holds each phase form in the middle of its phase', () => {
+    PHASES.forEach((p, i) => {
+      expect(formAt(((p.start + p.end) / 2) * 60)).toEqual(FORMS[i]);
+    });
+  });
+
+  it('changes smoothly, including across midnight', () => {
+    for (let m = 0; m < 1440; m++) {
+      const a = formAt(m);
+      const b = formAt(m + 1);
+      for (const k of Object.keys(a) as Array<keyof typeof a>) {
+        expect(Math.abs(a[k] - b[k])).toBeLessThan(0.05);
+      }
     }
   });
 });
