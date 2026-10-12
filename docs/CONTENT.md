@@ -83,10 +83,13 @@ De curves zijn **gestileerd**: ze tonen *wanneer* iets stijgt en daalt, niet ech
 | Je lichaam geeft warmte af via handen en voeten, wat inslapen voorbereidt | [11] | ✅ ✏️ toegevoegd ter vervanging van een vagere temperatuurzin |
 | Tip: een regelmatige bedtijd telt, niet alleen het aantal uren | [23] | ✅ observationeel (UK Biobank, ~61.000 mensen) |
 
-### Algemene uitspraken (footer, `/sources`)
+### Algemene uitspraken (footer, `/sources`, outro van de scroll-reis)
 | Claim | Bron | Status |
 |---|---|---|
 | Licht is de belangrijkste tijdgever van de klok; chronotype verschuift de patronen | [24], [15] | ✅ |
+| Outro: "Light, meals, movement and a regular bedtime keep it on time." | [24], [5], [23] | ✅ NIGMS noemt licht, voedselinname en fysieke activiteit als factoren die het ritme beïnvloeden |
+
+De trendwoorden per hoofdstuk ("rising", "falling"…) komen uit het gestileerde model hierboven, berekend op het midden van elke fase.
 
 ---
 

@@ -1,0 +1,434 @@
+---
+import { PHASES } from '../content/phases';
+import { CURVES, TREND_LABELS, curveTrend } from '../lib/circadian';
+import { formatTime } from '../lib/time';
+
+// Scrolling through this section is travelling through the day: the page's
+// clock follows the scroll position (see scripts/journey.ts).
+const chapters = PHASES.map((p) => {
+  const mid = ((p.start + p.end) / 2) * 60;
+  return {
+    ...p,
+    range: `${formatTime(p.start * 60)}–${p.end === 24 ? '24:00' : formatTime(p.end * 60)}`,
+    signals: CURVES.map((c) => ({ label: c.label, trend: TREND_LABELS[curveTrend(c.id, mid)] })),
+  };
+});
+---
+
+<section class="journey" aria-labelledby="journey-title" data-journey>
+  <div class="journey__intro" data-journey-intro>
+    <div class="journey__intro-inner" data-reveal>
+      <p class="journey__kicker">Scroll to live a day</p>
+      <h2 class="journey__title" id="journey-title">A day in your body</h2>
+      <p class="journey__lede">Twenty-four hours, eight phases. Keep scrolling and the clock moves with you.</p>
+    </div>
+  </div>
+
+  {
+    chapters.map((c, i) => (
+      <article class="chapter" id={`phase-${c.id}`} aria-labelledby={`chapter-${c.id}`} data-chapter data-start={c.start} data-end={c.end}>
+        <div class="chapter__inner">
+          <header class="chapter__head">
+            <p class="chapter__meta">
+              <span class="chapter__index">{String(i + 1).padStart(2, '0')}</span>
+              <span class="chapter__range">{c.range}</span>
+            </p>
+            <h3 class="chapter__name" id={`chapter-${c.id}`} tabindex="-1" data-reveal-name>
+              {c.name}
+            </h3>
+          </header>
+
+          <div class="chapter__copy" data-reveal>
+            <p class="chapter__headline">{c.headline}</p>
+            <p class="chapter__body">{c.body}</p>
+            <p class="chapter__tip">
+              <span class="chapter__tip-label">Try this</span>
+              <span>{c.tip}</span>
+            </p>
+            <dl class="chapter__signals">
+              {
+                c.signals.map((s) => (
+                  <div>
+                    <dt>{s.label}</dt>
+                    <dd>{s.trend}</dd>
+                  </div>
+                ))
+              }
+            </dl>
+            <p class="chapter__refs">
+              Sources{' '}
+              {c.refs.map((r, j) => (
+                <>
+                  {j > 0 && ', '}
+                  <a href={`/sources/#ref-${r}`} aria-label={`Source ${r}`}>
+                    {r}
+                  </a>
+                </>
+              ))}
+            </p>
+          </div>
+        </div>
+      </article>
+    ))
+  }
+
+  <div class="journey__outro" data-journey-outro>
+    <div class="journey__outro-inner" data-reveal>
+      <p class="journey__kicker">That was a day</p>
+      <h2 class="journey__title">Your body runs this loop every 24 hours.</h2>
+      <p class="journey__lede">Light, meals, movement and a regular bedtime keep it on time.</p>
+      <button class="journey__back" type="button" data-journey-back>Back to now</button>
+    </div>
+  </div>
+
+  <nav class="hud" aria-label="Jump to a phase of the day" data-hud>
+    <span class="hud__time" aria-hidden="true" data-hud-time>00:00</span>
+    <div class="hud__rail">
+      <span class="hud__fill" data-hud-fill></span>
+      <ol class="hud__list">
+        {
+          chapters.map((c) => (
+            <li style={`--at: ${c.start / 24}`}>
+              <a class="hud__link" href={`#phase-${c.id}`} data-hud-link={c.id}>
+                <span class="hud__dot" aria-hidden="true" />
+                <span class="hud__label">{c.name}</span>
+              </a>
+            </li>
+          ))
+        }
+      </ol>
+    </div>
+  </nav>
+</section>
+
+<style>
+  .journey {
+    position: relative;
+  }
+
+  .journey__intro,
+  .journey__outro {
+    min-height: 130svh;
+    display: grid;
+    align-items: center;
+  }
+
+  .journey__intro-inner,
+  .journey__outro-inner {
+    position: sticky;
+    top: 30svh;
+    max-width: 48rem;
+  }
+
+  .journey__kicker {
+    margin: 0 0 var(--space-3);
+    font-size: var(--text-sm);
+    font-weight: 600;
+    color: var(--ink-muted);
+  }
+
+  .journey__title {
+    margin: 0;
+    font-family: var(--font-display);
+    font-size: clamp(2.5rem, 1rem + 6vw, 6.5rem);
+    font-weight: var(--display-wght);
+    font-stretch: var(--display-wdth);
+    line-height: 0.95;
+    letter-spacing: -0.035em;
+  }
+
+  .journey__lede {
+    margin: var(--space-4) 0 0;
+    max-width: 34rem;
+    font-size: var(--text-lg);
+    color: var(--ink-muted);
+  }
+
+  .journey__back {
+    margin-top: var(--space-5);
+    font: inherit;
+    font-weight: 600;
+    color: var(--bg);
+    background: var(--ink);
+    border: 0;
+    border-radius: 999px;
+    padding: 12px 22px;
+    min-height: 44px;
+    cursor: pointer;
+    transition: transform var(--duration-micro) var(--ease-out);
+  }
+
+  .journey__back:hover {
+    transform: translateY(-1px);
+  }
+
+  /* Each chapter is tall; its content stays put while three hours pass. */
+  .chapter {
+    min-height: 170svh;
+  }
+
+  .chapter__inner {
+    position: sticky;
+    top: 14svh;
+    display: grid;
+    gap: var(--space-5);
+    padding-right: var(--space-6);
+  }
+
+  .chapter__meta {
+    margin: 0 0 var(--space-3);
+    display: flex;
+    gap: var(--space-3);
+    font-size: var(--text-sm);
+    font-variant-numeric: tabular-nums;
+    color: var(--ink-muted);
+  }
+
+  .chapter__index {
+    font-weight: 600;
+    color: var(--ink);
+  }
+
+  .chapter__name {
+    margin: 0;
+    font-family: var(--font-display);
+    font-size: clamp(3rem, 1rem + 9vw, 10rem);
+    font-weight: var(--display-wght);
+    font-stretch: var(--display-wdth);
+    line-height: 0.9;
+    letter-spacing: -0.04em;
+    outline: none;
+  }
+
+  .chapter__copy {
+    display: grid;
+    gap: var(--space-3);
+    max-width: 34rem;
+  }
+
+  .chapter__copy p {
+    margin: 0;
+  }
+
+  .chapter__headline {
+    font-family: var(--font-display);
+    font-size: var(--text-lg);
+    font-weight: 600;
+  }
+
+  .chapter__body {
+    color: var(--ink-muted);
+  }
+
+  .chapter__tip {
+    display: grid;
+    gap: var(--space-1);
+    padding-left: var(--space-3);
+    border-left: 2px solid var(--accent);
+  }
+
+  .chapter__tip-label {
+    font-size: var(--text-sm);
+    font-weight: 600;
+    color: var(--ink-muted);
+  }
+
+  .chapter__signals {
+    margin: var(--space-2) 0 0;
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: var(--space-2) var(--space-4);
+    font-size: var(--text-sm);
+  }
+
+  .chapter__signals div {
+    display: flex;
+    justify-content: space-between;
+    gap: var(--space-2);
+    padding-top: var(--space-2);
+    border-top: 1px solid color-mix(in oklab, var(--ink) 18%, transparent);
+  }
+
+  .chapter__signals dt {
+    color: var(--ink-muted);
+  }
+
+  .chapter__signals dd {
+    margin: 0;
+    font-weight: 600;
+  }
+
+  .chapter__refs {
+    font-size: var(--text-sm);
+    color: var(--ink-muted);
+  }
+
+  .chapter__refs a {
+    color: var(--ink);
+    text-underline-offset: 3px;
+  }
+
+  @media (min-width: 960px) {
+    .chapter__inner {
+      grid-template-columns: minmax(0, 1.2fr) minmax(0, 1fr);
+      align-items: end;
+      top: 22svh;
+      /* Keep clear of the progress rail and its labels. */
+      padding-right: 10rem;
+    }
+  }
+
+  /* --- Progress HUD: where in the day you are, and a way to jump ---------- */
+
+  .hud {
+    position: fixed;
+    z-index: 3;
+    right: var(--space-4);
+    top: 50%;
+    translate: 0 -50%;
+    display: grid;
+    justify-items: end;
+    gap: var(--space-3);
+    opacity: 0;
+    visibility: hidden;
+    transition:
+      opacity var(--duration-layout) var(--ease-out),
+      visibility var(--duration-layout);
+  }
+
+  :global([data-journey-active='true']) .hud {
+    opacity: 1;
+    visibility: visible;
+  }
+
+  .hud__time {
+    font-family: var(--font-display);
+    font-size: var(--text-lg);
+    font-weight: 600;
+    font-variant-numeric: tabular-nums;
+  }
+
+  .hud__rail {
+    position: relative;
+    width: 2px;
+    height: 44svh;
+    background: color-mix(in oklab, var(--ink) 18%, transparent);
+    border-radius: 2px;
+  }
+
+  .hud__fill {
+    position: absolute;
+    inset: 0;
+    background: var(--accent);
+    border-radius: 2px;
+    transform-origin: top;
+    transform: scaleY(var(--p, 0));
+  }
+
+  .hud__list {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+  }
+
+  .hud__list li {
+    position: absolute;
+    right: 50%;
+    top: calc(var(--at) * 100%);
+    translate: 50% -50%;
+  }
+
+  .hud__link {
+    display: flex;
+    align-items: center;
+    flex-direction: row-reverse;
+    gap: var(--space-2);
+    min-width: 32px;
+    min-height: 32px;
+    justify-content: center;
+    text-decoration: none;
+  }
+
+  .hud__dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: var(--bg);
+    border: 2px solid var(--ink);
+    transition: transform var(--duration-micro) var(--ease-out);
+  }
+
+  .hud__link[aria-current='true'] .hud__dot {
+    background: var(--accent);
+    border-color: var(--accent);
+    transform: scale(1.4);
+  }
+
+  .hud__label {
+    position: absolute;
+    right: calc(100% + 4px);
+    white-space: nowrap;
+    font-size: var(--text-sm);
+    opacity: 0;
+    translate: 6px 0;
+    transition:
+      opacity var(--duration-micro) var(--ease-out),
+      translate var(--duration-micro) var(--ease-out);
+    pointer-events: none;
+  }
+
+  .hud__link:hover .hud__label,
+  .hud__link:focus-visible .hud__label,
+  .hud__link[aria-current='true'] .hud__label {
+    opacity: 1;
+    translate: 0 0;
+  }
+
+  /* Phones: a slim bar along the bottom instead of a side rail. */
+  @media (max-width: 719px) {
+    .chapter__inner {
+      padding-right: 0;
+    }
+
+    .hud {
+      top: auto;
+      bottom: var(--space-3);
+      left: var(--space-3);
+      right: var(--space-3);
+      translate: none;
+      grid-template-columns: auto 1fr;
+      align-items: center;
+      justify-items: stretch;
+      padding: var(--space-2) var(--space-3);
+      border-radius: 999px;
+      background: color-mix(in oklab, var(--bg) 82%, transparent);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+    }
+
+    .hud__time {
+      font-size: var(--text-base);
+    }
+
+    .hud__rail {
+      width: auto;
+      height: 2px;
+    }
+
+    .hud__fill {
+      transform-origin: left;
+      transform: scaleX(var(--p, 0));
+    }
+
+    .hud__list li {
+      right: auto;
+      top: 50%;
+      left: calc(var(--at) * 100%);
+      translate: -50% -50%;
+    }
+
+    .hud__label {
+      display: none;
+    }
+  }
+</style>

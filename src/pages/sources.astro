@@ -1,5 +1,6 @@
 ---
 import Base from '../layouts/Base.astro';
+import { SOURCES } from '../content/sources';
 ---
 
 <Base title="Method & sources · Your Body, Now" description="How the curves and copy on Your Body, Now were made, and where the science comes from.">
@@ -26,8 +27,26 @@ import Base from '../layouts/Base.astro';
       specialist.
     </p>
 
-    <h2>Sources</h2>
-    <p>The full reference list is being compiled and will appear here before launch.</p>
+    <h2>How the copy was checked</h2>
+    <p>
+      Every claim on the site is backed by peer-reviewed research, a review or an official reference work. Where the
+      evidence was weaker or less precise than a sentence suggested, the sentence was rewritten to match it.
+    </p>
+
+    <h2 id="references">References</h2>
+    <ol class="refs">
+      {
+        SOURCES.map((s) => (
+          <li id={`ref-${s.id}`}>
+            <span class="refs__authors">{s.authors}</span>{' '}
+            <a href={s.url} rel="noopener" target="_blank">
+              {s.title}
+            </a>
+            . <span class="refs__pub">{s.publication}.</span>
+          </li>
+        ))
+      }
+    </ol>
   </main>
 </Base>
 
@@ -66,5 +85,32 @@ import Base from '../layouts/Base.astro';
   p {
     margin: 0;
     color: #c9c8e0;
+  }
+
+  .refs {
+    margin: var(--space-3) 0 0;
+    padding-left: 1.75rem;
+    display: grid;
+    gap: var(--space-3);
+    color: #c9c8e0;
+    font-size: var(--text-sm);
+  }
+
+  .refs li {
+    padding-left: var(--space-1);
+    scroll-margin-top: var(--space-6);
+  }
+
+  .refs li:target {
+    color: #f2f1fb;
+  }
+
+  .refs a {
+    color: #f2f1fb;
+    text-underline-offset: 3px;
+  }
+
+  .refs__pub {
+    font-style: italic;
   }
 </style>

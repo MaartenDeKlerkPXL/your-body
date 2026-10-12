@@ -9,7 +9,8 @@ Gebouwd met het oog op een Awwwards Site of the Day.
 | Onderdeel | Keuze |
 |---|---|
 | Framework | [Astro](https://astro.build) (statische output) + TypeScript |
-| Animatie | GSAP: Draggable + InertiaPlugin (draaiknop), SplitText (titels) |
+| Animatie | GSAP: Draggable + InertiaPlugin (draaiknop), SplitText (titels), ScrollTrigger (reveals) |
+| Scroll | [Lenis](https://lenis.darkroom.engineering) smooth scroll |
 | WebGL | [OGL](https://github.com/oframe/ogl) met een eigen fragment shader |
 | Fonts | Bricolage Grotesque (variabel, "ademt" mee met alertheid) + Instrument Sans, self-hosted via Fontsource |
 | Tests | Vitest |
@@ -28,15 +29,17 @@ npm run build    # astro check + productie-build naar dist/
 
 ```
 src/
-  content/phases.ts     de 8 fases van de dag (tekst)
+  content/phases.ts     de 8 fases van de dag (tekst + bronverwijzingen)
+  content/sources.ts    referentielijst (genummerd zoals docs/CONTENT.md)
   lib/circadian.ts      gestileerde 24u-curves: alertheid, temperatuur, cortisol, melatonine
   lib/palette.ts        kleur van de dag (OKLab), met gegarandeerd WCAG AA-contrast
   lib/time.ts           tijdhulpjes
   scripts/app.ts        regie: frame-loop, fases, URL, live/verkenmodus
   scripts/dial.ts       24u-draaiknop (slepen, gooien, toetsenbord)
   scripts/intro.ts      openingsanimatie
+  scripts/journey.ts    scroll-reis: scrollpositie → tijd, reveals, voortgangsbalk
   scripts/sky.ts        WebGL-achtergrond
-  components/           Dial, Curves
+  components/           Dial, Curves, Journey
   pages/                index, sources
 docs/
   CONTENT.md            elke wetenschappelijke claim + bron die nog moet worden toegevoegd

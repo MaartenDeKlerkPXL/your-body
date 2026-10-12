@@ -79,6 +79,14 @@ export function curveValue(id: CurveId, minutes: number): number {
 
 export type Trend = 'low' | 'rising' | 'peak' | 'dip' | 'falling';
 
+export const TREND_LABELS: Record<Trend, string> = {
+  low: 'low',
+  rising: 'rising',
+  peak: 'peaking',
+  dip: 'dipping',
+  falling: 'falling',
+};
+
 export function curveTrend(id: CurveId, minutes: number): Trend {
   const v = curveValue(id, minutes);
   if (v < 0.08) return 'low';

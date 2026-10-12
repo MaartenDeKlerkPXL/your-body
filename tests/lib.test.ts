@@ -3,6 +3,7 @@ import { formatTime, parseTime, shortestDelta, wrapMinutes } from '../src/lib/ti
 import { curveValue, curveTrend } from '../src/lib/circadian';
 import { contrast, paletteAt } from '../src/lib/palette';
 import { PHASES, phaseAt } from '../src/content/phases';
+import { SOURCES } from '../src/content/sources';
 
 describe('time', () => {
   it('wraps and formats', () => {
@@ -83,5 +84,13 @@ describe('phases', () => {
     for (let m = 0; m < 1440; m += 15) expect(phaseAt(m)).toBeDefined();
     expect(PHASES[0].start).toBe(0);
     expect(PHASES.at(-1)?.end).toBe(24);
+  });
+
+  it('only cites sources that exist', () => {
+    const ids = new Set(SOURCES.map((s) => s.id));
+    for (const p of PHASES) {
+      expect(p.refs.length).toBeGreaterThan(0);
+      for (const r of p.refs) expect(ids.has(r)).toBe(true);
+    }
   });
 });

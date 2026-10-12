@@ -1,22 +1,15 @@
 import { gsap } from 'gsap';
 import { SplitText } from 'gsap/SplitText';
-import { CURVES, curveTrend, curveValue, type Trend } from '../lib/circadian';
+import { CURVES, TREND_LABELS, curveTrend, curveValue } from '../lib/circadian';
 import { phaseAt, type Phase } from '../content/phases';
 import { paletteAt, rgbToHex, luminance } from '../lib/palette';
 import { formatTime, nowMinutes, parseTime } from '../lib/time';
 import { createDial } from './dial';
 import { createSky } from './sky';
 import { playIntro } from './intro';
+import { createJourney } from './journey';
 
 gsap.registerPlugin(SplitText);
-
-const TREND_WORDS: Record<Trend, string> = {
-  low: 'low',
-  rising: 'rising',
-  peak: 'peaking',
-  dip: 'dipping',
-  falling: 'falling',
-};
 
 function $<T extends Element = HTMLElement>(selector: string): T {
   const el = document.querySelector<T>(selector);
@@ -51,6 +44,7 @@ export function start() {
   // Set by an inline script in the page before first paint (see index.astro).
   let intro = root.classList.contains('intro');
   let live = true;
+  let touched = false; // has the person moved the dial yet?
   const setLive = (value: boolean) => {
     live = value;
     document.body.dataset.live = String(value);
@@ -60,10 +54,27 @@ export function start() {
   const dial = createDial(dialEl, {
     reducedMotion,
     onUserInput: () => {
+      touched = true;
       if (!intro) setLive(false);
     },
   });
   const sky = createSky($<HTMLCanvasElement>('[data-sky]'), reducedMotion);
+
+  // If nobody has touched the dial after a few seconds, the knob wiggles
+  // along the ring once to show it can be dragged.
+  function scheduleNudge() {
+    if (reducedMotion) return;
+    window.setTimeout(() => {
+      if (touched || window.scrollY > window.innerHeight * 0.5) return;
+      const knob = dialEl.querySelector('.dial__knob');
+      gsap
+        .timeline()
+        .to(knob, { x: 10, duration: 0.35, ease: 'power2.out' })
+        .to(knob, { x: -10, duration: 0.5, ease: 'power2.inOut' })
+        .to(knob, { x: 0, duration: 0.6, ease: 'elastic.out(1, 0.4)' })
+        .fromTo(dialHint, { opacity: 0.4 }, { opacity: 1, duration: 0.6, clearProps: 'opacity' }, 0);
+    }, 3500);
+  }
 
   // A shared link like ?t=03:00 opens straight on that moment.
   const fromUrl = parseTime(new URLSearchParams(location.search).get('t'));
@@ -89,11 +100,13 @@ export function start() {
       (duration) => dial.wind(startAt, duration),
       () => {
         intro = false;
+        scheduleNudge();
       },
     );
   } else {
     document.querySelector('[data-intro-title]')?.remove();
     dial.set(startAt);
+    scheduleNudge();
   }
 
   window.setInterval(() => {
@@ -181,12 +194,38 @@ export function start() {
   let lastLive: boolean | null = null;
   let lastPhase = '';
 
+  const journey = createJourney($('[data-journey]'), {
+    reducedMotion,
+    onBack: () => {
+      setLive(true);
+      dial.set(nowMinutes(), true);
+      history.replaceState(null, '', location.pathname);
+    },
+  });
+
+  // The glow drifts between the dial and the journey's stage instead of jumping.
+  let focusX = window.innerWidth * 0.7;
+  let focusY = window.innerHeight * 0.4;
+
   gsap.ticker.add((_time, deltaMs) => {
     const rect = dialEl.getBoundingClientRect(); // read before any writes
     const minutes = dial.minutes();
-    const palette = paletteAt(minutes);
-    const energy = curveValue('alertness', minutes);
+    // The sky follows the scroll while travelling through the journey,
+    // the dial (and everything around it) keeps its own time.
+    const scrolled = journey.minutes(minutes);
+    const shown = scrolled ?? minutes;
+    const palette = paletteAt(shown);
+    const energy = curveValue('alertness', shown);
     const bg = rgbToHex(palette.bg);
+
+    const wide = window.innerWidth >= 960;
+    const [targetX, targetY] =
+      scrolled === null
+        ? [rect.left + rect.width / 2, rect.top + rect.height / 2]
+        : [window.innerWidth * (wide ? 0.72 : 0.5), window.innerHeight * (wide ? 0.45 : 0.3)];
+    const ease = reducedMotion ? 1 : Math.min(1, deltaMs / 160);
+    focusX += (targetX - focusX) * ease;
+    focusY += (targetY - focusY) * ease;
 
     setVar('--bg', bg);
     setVar('--glow', rgbToHex(palette.glow));
@@ -207,10 +246,11 @@ export function start() {
         glow: palette.glow,
         accent: palette.accent,
         energy,
-        focus: [rect.left + rect.width / 2, rect.top + rect.height / 2],
+        focus: [focusX, focusY],
       },
       Math.min(deltaMs, 100) / 1000,
     );
+    journey.update(scrolled);
 
     const minute = Math.floor(minutes);
     if (minute !== lastMinute || live !== lastLive) {
@@ -222,7 +262,7 @@ export function start() {
       handle.setAttribute('aria-valuenow', String(minute));
       handle.setAttribute('aria-valuetext', time);
       if (document.activeElement !== jumpInput) jumpInput.value = time;
-      for (const t of trendEls) t.el.textContent = TREND_WORDS[curveTrend(t.id, minutes)];
+      for (const t of trendEls) t.el.textContent = TREND_LABELS[curveTrend(t.id, minutes)];
       if (!live && !intro && lastLive !== null) syncUrl(minutes);
       lastMinute = minute;
       lastLive = live;
