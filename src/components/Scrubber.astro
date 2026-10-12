@@ -26,10 +26,12 @@ const labels = Array.from({ length: TO - FROM + 1 }, (_, i) => ({
   text: String((((FROM + i) % 24) + 24) % 24).padStart(2, '0'),
 }));
 
-// Phase names and boundaries for every phase that touches the tape.
+// Phase names and boundaries for every phase that touches the tape, with an
+// hour to spare: the chronotype slides them up to an hour either way
+// (scripts/app.ts moves the group).
 const phases = [-1, 0, 1]
   .flatMap((d) => PHASES.map((p) => ({ start: d * 24 + p.start, end: d * 24 + p.end, name: p.name })))
-  .filter((p) => p.end > FROM && p.start < TO)
+  .filter((p) => p.end > FROM - 1 && p.start < TO + 1)
   .map((p) => ({ x: xAt((p.start + p.end) / 2), edge: xAt(p.start), name: p.name }));
 ---
 
@@ -51,7 +53,6 @@ const phases = [-1, 0, 1]
     data-scrub-slider
   >
     <svg class="scrub__tape" width={W} height={H} viewBox={`0 0 ${W} ${H}`} aria-hidden="true" data-scrub-tape>
-      {phases.map((p) => <line class="scrub__edge" x1={p.edge} y1="44" x2={p.edge} y2={H} />)}
       <path class="scrub__tick" d={minor} />
       <path class="scrub__tick scrub__tick--hour" d={major} />
       {
@@ -61,13 +62,16 @@ const phases = [-1, 0, 1]
           </text>
         ))
       }
-      {
-        phases.map((p) => (
-          <text class="scrub__phase" x={p.x} y="66">
-            {p.name}
-          </text>
-        ))
-      }
+      <g data-scrub-phases data-hour={HOUR}>
+        {phases.map((p) => <line class="scrub__edge" x1={p.edge} y1="44" x2={p.edge} y2={H} />)}
+        {
+          phases.map((p) => (
+            <text class="scrub__phase" x={p.x} y="66">
+              {p.name}
+            </text>
+          ))
+        }
+      </g>
     </svg>
     <span class="scrub__needle" aria-hidden="true" data-scrub-needle></span>
   </div>

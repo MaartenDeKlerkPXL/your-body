@@ -66,7 +66,9 @@ const chapters = PHASES.map((p) => {
           <header class="chapter__head">
             <p class="chapter__meta">
               <span class="chapter__index">{String(i + 1).padStart(2, '0')}</span>
-              <span class="chapter__range">{c.range}</span>
+              <span class="chapter__range" data-range-start={c.start * 60} data-range-end={c.end * 60}>
+                {c.range}
+              </span>
             </p>
             <h3 class="chapter__name" id={`chapter-${c.id}`} tabindex="-1" data-reveal-name>
               {c.name}
@@ -82,7 +84,8 @@ const chapters = PHASES.map((p) => {
             </p>
             <div class="spark" data-spark data-from={c.from} data-span={c.span}>
               <p class="visually-hidden">
-                How alertness, core temperature, cortisol and melatonin change from {c.edges[0]} to {c.edges[1]}:
+                How alertness, core temperature, cortisol and melatonin change from{' '}
+                <span data-edge={c.start * 60}>{c.edges[0]}</span> to <span data-edge={c.end * 60}>{c.edges[1]}</span>:
                 {c.sparks.map((sp) => `${sp.label} ${sp.trend}.`).join(' ')}
               </p>
               <ul class="spark__list" aria-hidden="true">
@@ -108,8 +111,12 @@ const chapters = PHASES.map((p) => {
                 }
               </ul>
               <div class="spark__axis" aria-hidden="true">
-                <span style={`left: ${(c.band.x / SPARK_W) * 100}%`}>{c.edges[0]}</span>
-                <span style={`left: ${((c.band.x + c.band.w) / SPARK_W) * 100}%`}>{c.edges[1]}</span>
+                <span style={`left: ${(c.band.x / SPARK_W) * 100}%`} data-edge={c.start * 60}>
+                  {c.edges[0]}
+                </span>
+                <span style={`left: ${((c.band.x + c.band.w) / SPARK_W) * 100}%`} data-edge={c.end * 60}>
+                  {c.edges[1]}
+                </span>
               </div>
               <div class="spark__tip" role="presentation" data-spark-tip hidden></div>
             </div>

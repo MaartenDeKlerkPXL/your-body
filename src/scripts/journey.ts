@@ -6,6 +6,7 @@ import { MINUTES_PER_DAY, formatTime, shortestDelta } from '../lib/time';
 import { phaseAt } from '../content/phases';
 import { CURVES, TREND_LABELS, curveTrend, curveValue, type CurveId } from '../lib/circadian';
 import { SPARK_H, sparkY } from '../lib/spark';
+import { clockLabel } from '../lib/chronotype';
 
 gsap.registerPlugin(ScrollTrigger, SplitText);
 
@@ -18,8 +19,11 @@ gsap.registerPlugin(ScrollTrigger, SplitText);
 export interface Journey {
   /** Time the page should show for the current scroll position, or null outside the journey. */
   minutes(base: number): number | null;
-  /** Called every frame with the time currently shown. */
-  update(minutes: number | null): void;
+  /**
+   * Called every frame with the body time currently shown and the chronotype
+   * shift; the HUD shows it on the clock (body time + shift).
+   */
+  update(minutes: number | null, shift: number): void;
 }
 
 interface Range {
@@ -81,6 +85,9 @@ export function createJourney(root: HTMLElement, { reducedMotion, onBack }: Opti
     }
   }
 
+  // Body time + shift = clock time, for everything the journey writes out.
+  let shift = 0;
+
   // Hover: one crosshair through all four charts and one readout listing every
   // curve at that time. Everything it shows is also in the chapter text.
   for (const c of chapters) {
@@ -97,7 +104,7 @@ export function createJourney(root: HTMLElement, { reducedMotion, onBack }: Opti
 
       tip.replaceChildren();
       const title = document.createElement('strong');
-      title.textContent = formatTime(minutes);
+      title.textContent = formatTime(minutes + shift);
       tip.append(title);
       for (const curve of CURVES) {
         const row = document.createElement('div');
@@ -249,8 +256,10 @@ export function createJourney(root: HTMLElement, { reducedMotion, onBack }: Opti
   let lastMinute = -1;
   let lastActive: boolean | null = null;
   let lastPhase = '';
+  let lastShift = 0;
 
-  function update(current: number | null) {
+  function update(current: number | null, nextShift: number) {
+    shift = nextShift;
     const active = current !== null;
     if (active !== lastActive) {
       document.body.dataset.journeyActive = String(active);
@@ -265,9 +274,11 @@ export function createJourney(root: HTMLElement, { reducedMotion, onBack }: Opti
     hudRail.style.setProperty('--p', progress.toFixed(4));
 
     const minute = Math.floor(current);
-    if (minute !== lastMinute) {
-      hudTime.textContent = current >= MINUTES_PER_DAY ? '24:00' : formatTime(current);
+    const shiftMinute = Math.round(shift);
+    if (minute !== lastMinute || shiftMinute !== lastShift) {
+      hudTime.textContent = clockLabel(Math.min(minute, MINUTES_PER_DAY), shiftMinute);
       lastMinute = minute;
+      lastShift = shiftMinute;
     }
 
     // Only mark a phase while actually inside a chapter, not during the blends.

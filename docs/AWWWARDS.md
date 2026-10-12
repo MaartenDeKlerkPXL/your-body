@@ -47,7 +47,7 @@ What your body is doing at this very hour, and what you can do with it: an inter
 
 **Description**
 ```
-Your Body, Now is an interactive journey through the human circadian rhythm. The site runs on the visitor's own clock: open it at 14:30 and you land in the afternoon dip; open it at 03:00 and you find your body at its lowest point. A 24-hour dial (a draggable timeline on phones) lets you travel through the day, and a scroll-driven story walks through eight phases, from deep night to wind-down.
+Your Body, Now is an interactive journey through the human circadian rhythm. The site runs on the visitor's own clock: open it at 14:30 and you land in the afternoon dip; open it at 03:00 and you find your body at its lowest point. A 24-hour dial (a draggable timeline on phones) lets you travel through the day, and a scroll-driven story walks through eight phases, from deep night to wind-down. Early bird or night owl? One switch slides the whole rhythm an hour earlier or later.
 
 Everything on screen follows the hour. A WebGL shader paints the sky and gives each phase its own abstract body: a breathing sphere under stars, a rising sun, crisp focus rings, a drooping drop, orbiting satellites, a sunset halo, dust drifting apart. A generative Web Audio score, made without a single audio file, changes with it. The display type takes on a weight per phase: light at night, bold at the peaks.
 
@@ -135,8 +135,8 @@ Neem dit op op je eigen computer. In de testomgeving loopt de shader niet vloeie
 |---|---|---|
 | Design | 40 % | Kleur per minuut van de dag, vorm per fase, variabele typografie per fase, consistente stijl |
 | Usability | 30 % | Draaiknop met toetsenbord, tijdbalk op mobiel, "Back to now", deelbare `?t=`-links, reduced motion, Lighthouse a11y 100 |
-| Creativity | 20 % | De site leeft op jouw klok; scroll = tijdreizen; generatief geluid; vorm per fase |
-| Content | 10 % | 24 bronnen, tekst afgestemd op het bewijs, mini-grafieken en tabel |
+| Creativity | 20 % | De site leeft op jouw klok, en op jouw chronotype; scroll = tijdreizen; generatief geluid; vorm per fase |
+| Content | 10 % | 26 bronnen, tekst afgestemd op het bewijs, mini-grafieken en tabel |
 
 **Developer Award**: kies dit ook aan. Relevante punten: semantische HTML, Lighthouse 100 voor a11y/best practices/SEO, ruwe WebGL met asynchrone shadercompilatie en adaptieve kwaliteit, gesubset font, lazy-loaded modules, contrast getest voor elke 5 minuten van de dag (unit tests).
 

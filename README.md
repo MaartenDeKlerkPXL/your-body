@@ -1,6 +1,6 @@
 # Your Body, Now
 
-Een interactieve ervaring die laat zien wat je lichaam op elk uur van de dag doet, en wat je daarmee kunt doen. De site leeft mee met de klok van de bezoeker: kleur, licht, beweging en typografie veranderen met het uur. Met de 24-uursdraaiknop kun je door de dag reizen.
+Een interactieve ervaring die laat zien wat je lichaam op elk uur van de dag doet, en wat je daarmee kunt doen. De site leeft mee met de klok van de bezoeker: kleur, licht, beweging en typografie veranderen met het uur. Met de 24-uursdraaiknop kun je door de dag reizen, en met "Your clock" schuif je het ritme een uur vroeger (Early bird) of later (Night owl).
 
 Gebouwd met het oog op een Awwwards Site of the Day.
 
@@ -45,6 +45,8 @@ src/
   content/phases.ts     de 8 fases van de dag (tekst + bronverwijzingen)
   content/sources.ts    referentielijst (genummerd zoals docs/CONTENT.md)
   lib/circadian.ts      gestileerde 24u-curves: alertheid, temperatuur, cortisol, melatonine
+  lib/chronotype.ts     chronotype: lichaamstijd = kloktijd − verschuiving (±1 u)
+  lib/rhythm-view.ts    curves, tabel en beschrijvingen van de grote grafiek (build én browser)
   lib/palette.ts        kleur van de dag (OKLab), met gegarandeerd WCAG AA-contrast
   lib/form.ts           de vorm per fase (parameters voor de shader), met overgangen
   lib/type.ts           vaste letterdikte en -breedte per fase
@@ -72,6 +74,7 @@ Wat er nog moet gebeuren staat in [`TODO.md`](TODO.md).
 
 - `?t=03:00` in de URL opent de site meteen op dat uur (deelbaar, en handig voor de jury).
 - Draaiknop met toetsenbord: ←/→ ±15 min, Page Up/Down ±1 uur, Home/End begin/einde van de dag.
+- Het gekozen chronotype wordt onthouden in `localStorage` (`ybn-chronotype`); de `?t=`-link blijft kloktijd.
 - `prefers-reduced-motion` wordt gerespecteerd: geen intro, geen shader-beweging, geen inertie, geen tekstanimaties.
 - Geluid staat standaard **uit** en start alleen na een klik op de knop linksonder. Het volgt de tijd op het scherm (draaiknop of scroll-reis) en pauzeert als het tabblad op de achtergrond staat. Op een iPhone met de stille-modus-schakelaar aan blijft Web Audio stil.
 - De openingsanimatie speelt één keer per sessie en is over te slaan met een klik, toets of scroll. Opnieuw zien: open een nieuw tabblad of wis `sessionStorage`.

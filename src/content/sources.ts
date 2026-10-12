@@ -179,4 +179,18 @@ export const SOURCES: Source[] = [
     publication: 'nigms.nih.gov',
     url: 'https://www.nigms.nih.gov/education/fact-sheets/Pages/circadian-rhythms',
   },
+  {
+    id: 25,
+    authors: 'Kerkhof GA, Van Dongen HPA.',
+    title: 'Morning-type and evening-type individuals differ in the phase position of their endogenous circadian oscillator',
+    publication: 'Neurosci Lett. 1996;218:153–156',
+    url: 'https://pubmed.ncbi.nlm.nih.gov/8945751/',
+  },
+  {
+    id: 26,
+    authors: 'Lack L, Bailey M, Lovato N, Wright H.',
+    title: 'Chronotype differences in circadian rhythms of temperature, melatonin, and sleepiness as measured in a modified constant routine protocol',
+    publication: 'Nat Sci Sleep. 2009;1:1–8',
+    url: 'https://pmc.ncbi.nlm.nih.gov/articles/PMC3630920/',
+  },
 ];

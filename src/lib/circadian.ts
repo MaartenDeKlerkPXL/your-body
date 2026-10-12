@@ -130,9 +130,9 @@ const fmt = (m: number) => {
  * A one-sentence description of a curve's shape over the day, derived from
  * the model itself so it can never drift from the chart. Lists the turning
  * points (peaks and troughs that stand out) in time order, starting from the
- * lowest point of the day.
+ * lowest point of the day. `shift` (minutes) moves the times for a chronotype.
  */
-export function describeCurve(id: CurveId): string {
+export function describeCurve(id: CurveId, shift = 0): string {
   const step = 5;
   const n = 1440 / step;
   const v = Array.from({ length: n }, (_, i) => curveValue(id, i * step));
@@ -176,14 +176,14 @@ export function describeCurve(id: CurveId): string {
     .filter((t) => t.i !== lowest)
     .sort((a, b) => ((a.i - start + n) % n) - ((b.i - start + n) % n));
   const parts = [
-    flat ? `stays low from about ${fmt(from * step)} to ${fmt(to * step)}` : `is lowest around ${fmt(lowest * step)}`,
+    flat ? `stays low from about ${fmt(from * step + shift)} to ${fmt(to * step + shift)}` : `is lowest around ${fmt(lowest * step + shift)}`,
   ];
   let peaks = 0;
   for (const t of ordered) {
     if (t.kind === 'peak') {
-      parts.push(peaks === 0 ? `peaks around ${fmt(t.i * step)}` : `peaks again around ${fmt(t.i * step)}`);
+      parts.push(peaks === 0 ? `peaks around ${fmt(t.i * step + shift)}` : `peaks again around ${fmt(t.i * step + shift)}`);
       peaks++;
-    } else parts.push(`dips around ${fmt(t.i * step)}`);
+    } else parts.push(`dips around ${fmt(t.i * step + shift)}`);
   }
   // A plateau without a single standout point: still name the high.
   if (!highest) {
@@ -191,7 +191,7 @@ export function describeCurve(id: CurveId): string {
     v.forEach((x, i) => {
       if (x > v[top]) top = i;
     });
-    parts.push(`is highest around ${fmt(top * step)}`);
+    parts.push(`is highest around ${fmt(top * step + shift)}`);
   }
   const label = CURVES.find((c) => c.id === id)!.label;
   const last = parts.pop()!;

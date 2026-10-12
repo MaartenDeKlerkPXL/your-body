@@ -4,6 +4,7 @@ import Dial from '../components/Dial.astro';
 import Curves from '../components/Curves.astro';
 import Journey from '../components/Journey.astro';
 import Scrubber from '../components/Scrubber.astro';
+import { CHRONOTYPES, DEFAULT_CHRONOTYPE, sleepWindow } from '../lib/chronotype';
 import { PHASES } from '../content/phases';
 
 // Server-render the first phase so the page reads fine before (or without) JS.
@@ -92,6 +93,22 @@ const first = PHASES[0];
           <input id="jump-time" type="time" step="60" required data-jump-input />
           <button type="submit">Go</button>
         </form>
+
+        <!-- Chronotype: shifts the body's rhythm against the clock (lib/chronotype.ts). -->
+        <fieldset class="chrono" data-chrono data-intro-chrome>
+          <legend class="chrono__legend">Your clock</legend>
+          <div class="chrono__options">
+            {
+              CHRONOTYPES.map((c) => (
+                <label class="chrono__option">
+                  <input type="radio" name="chronotype" value={c.id} checked={c.id === DEFAULT_CHRONOTYPE} />
+                  <span>{c.label}</span>
+                </label>
+              ))
+            }
+          </div>
+          <p class="chrono__hint" data-chrono-hint>Sleeps around {sleepWindow(0)}</p>
+        </fieldset>
       </section>
     </main>
 
@@ -516,6 +533,80 @@ const first = PHASES[0];
     align-items: center;
     gap: var(--space-2);
     font-size: var(--text-sm);
+  }
+
+  /* --- Chronotype: a segmented control built on native radios ----------- */
+  .chrono {
+    margin: 0;
+    padding: 0;
+    border: 0;
+    display: grid;
+    justify-items: center;
+    gap: var(--space-2);
+    min-width: 0;
+  }
+
+  .chrono__legend {
+    padding: 0;
+    margin-bottom: var(--space-2);
+    font-size: var(--text-sm);
+    font-weight: 600;
+    color: var(--ink-muted);
+    text-align: center;
+  }
+
+  .chrono__options {
+    display: inline-flex;
+    padding: 3px;
+    gap: 2px;
+    border-radius: 999px;
+    background: color-mix(in oklab, var(--ink) 8%, transparent);
+    border: 1px solid color-mix(in oklab, var(--ink) 18%, transparent);
+  }
+
+  .chrono__option {
+    position: relative;
+    cursor: pointer;
+  }
+
+  .chrono__option input {
+    position: absolute;
+    inset: 0;
+    margin: 0;
+    opacity: 0;
+    cursor: pointer;
+  }
+
+  .chrono__option span {
+    display: block;
+    padding: 6px 12px;
+    min-height: 32px;
+    line-height: 20px;
+    border-radius: 999px;
+    font-size: var(--text-sm);
+    font-weight: 600;
+    white-space: nowrap;
+    color: var(--ink);
+    transition:
+      background-color var(--duration-micro) var(--ease-out),
+      color var(--duration-micro) var(--ease-out);
+  }
+
+  .chrono__option input:checked + span {
+    background: var(--ink);
+    color: var(--bg);
+  }
+
+  .chrono__option input:focus-visible + span {
+    outline: 2px solid var(--ink);
+    outline-offset: 2px;
+  }
+
+  .chrono__hint {
+    margin: 0;
+    font-size: var(--text-sm);
+    color: var(--ink-muted);
+    font-variant-numeric: tabular-nums;
   }
 
   .jump input {

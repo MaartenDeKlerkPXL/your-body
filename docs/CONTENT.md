@@ -25,6 +25,16 @@ De curves zijn **gestileerd**: ze tonen *wanneer* iets stijgt en daalt, niet ech
 | Kerntemperatuur | minimum in de vroege ochtend vóór het ontwaken, maximum laat in de namiddag / vroege avond | [9], [10] | 🟡 exacte uren |
 | Alertheid | laagst in de vroege ochtend (volgt de kerntemperatuur), steile stijging na het ontwaken (slaapinertie), piek late ochtend, dip vroege namiddag, tweede piek vroege avond, "verboden zone" voor slaap enkele uren vóór bedtijd | [12], [13], [14], [15], [16] | ✅ |
 
+### Chronotype (`src/lib/chronotype.ts`)
+
+De toggle "Your clock" verschuift het hele model: **lichaamstijd = kloktijd − verschuiving**. Curves, fases, vormen, kleur en geluid lopen op lichaamstijd; elke tijd op het scherm blijft kloktijd.
+
+| Claim | Bron | Status |
+|---|---|---|
+| Ochtend- en avondtypes verschillen 2 à 3 uur in de fase van kerntemperatuur, melatonine en slaperigheid | [25], [26] | ✅ Kerkhof & Van Dongen: ~2 u in het temperatuurritme; Lack et al.: 2–3 u in temperatuur, melatonine en slaperigheid |
+| De site verschuift **±1 uur** (Early bird 22:00–06:00, In between 23:00–07:00, Night owl 00:00–08:00) | [25], [26] | ✅ bewust conservatief: het verschil tussen de uitersten in de studies, niet tussen een gemiddeld en een uitgesproken type |
+| Het ritme schuift als geheel op; de vorm verandert niet | [26] | 🟡 vereenvoudiging: in [26] verschillen de types vooral in fase, niet in amplitude |
+
 ---
 
 ## Claims per fase (`src/content/phases.ts`)
@@ -121,6 +131,8 @@ De trendwoorden per hoofdstuk ("rising", "falling"…) komen uit het gestileerde
 22. Crispim CA, et al. **Relationship between food intake and sleep pattern in healthy individuals.** *J Clin Sleep Med.* 2011;7(6):659–664. [doi:10.5664/jcsm.1476](https://doi.org/10.5664/jcsm.1476) · [PMC3227713](https://pmc.ncbi.nlm.nih.gov/articles/PMC3227713/)
 23. Windred DP, et al. **Sleep regularity is a stronger predictor of mortality risk than sleep duration: a prospective cohort study.** *Sleep.* 2024;47(1):zsad253. [PMC-commentaar](https://pmc.ncbi.nlm.nih.gov/articles/PMC10782489/)
 24. National Institute of General Medical Sciences (NIH). **Circadian Rhythms** (fact sheet). [nigms.nih.gov](https://www.nigms.nih.gov/education/fact-sheets/Pages/circadian-rhythms)
+25. Kerkhof GA, Van Dongen HPA. **Morning-type and evening-type individuals differ in the phase position of their endogenous circadian oscillator.** *Neurosci Lett.* 1996;218(3):153–156. [PubMed 8945751](https://pubmed.ncbi.nlm.nih.gov/8945751/)
+26. Lack L, Bailey M, Lovato N, Wright H. **Chronotype differences in circadian rhythms of temperature, melatonin, and sleepiness as measured in a modified constant routine protocol.** *Nat Sci Sleep.* 2009;1:1–8. [PMC3630920](https://pmc.ncbi.nlm.nih.gov/articles/PMC3630920/)
 
 ---
 
@@ -128,7 +140,8 @@ De trendwoorden per hoofdstuk ("rising", "falling"…) komen uit het gestileerde
 
 1. **[6]/[7]** het exacte tijdsvenster van de cortisolpiek na het ontwaken (30–45 min).
 2. **[9]/[10]** de uren van het temperatuurminimum en -maximum, om de curve in `circadian.ts` eventueel bij te stellen (nu: min 04:30, max 18:00).
-3. Paginanummers van [17] en [20] in de volledige tekst, en de volledige auteurslijsten waar nu "et al." staat.
+3. **[26]** of de types ook in amplitude verschillen, of enkel in fase (de site schuift nu alleen op).
+4. Paginanummers van [17] en [20] in de volledige tekst, en de volledige auteurslijsten waar nu "et al." staat.
 
 ## Bewust vermeden
 

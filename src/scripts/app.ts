@@ -12,6 +12,8 @@ import type { Journey } from './journey';
 import type { Ambient } from './ambient';
 import { formAt } from '../lib/form';
 import { displayAxes } from '../lib/type';
+import { DEFAULT_CHRONOTYPE, clockLabel, isChronotype, shiftOf, sleepWindow, type Chronotype } from '../lib/chronotype';
+import { curvePath, rhythmCells, rhythmNote, rhythmSummary } from '../lib/rhythm-view';
 
 gsap.registerPlugin(SplitText);
 
@@ -149,6 +151,92 @@ export function start() {
     handle.focus();
   });
 
+  // --- Chronotype -------------------------------------------------------------
+  // Early birds and night owls run the same rhythm an hour earlier or later.
+  // The shift glides, so the curves slide along the axis instead of jumping;
+  // text that names times is rewritten once it lands.
+
+  const CHRONO_KEY = 'ybn-chronotype';
+  const chronoInputs = [...document.querySelectorAll<HTMLInputElement>('[data-chrono] input[name="chronotype"]')];
+  const chronoHint = $('[data-chrono-hint]');
+  const curvePaths = CURVES.map((c) => ({ id: c.id, el: $<SVGPathElement>(`[data-curve-path="${c.id}"]`) }));
+  const scrubPhases = $<SVGGElement>('[data-scrub-phases]');
+  const scrubHour = Number(scrubPhases.dataset.hour);
+  const curvesNote = $('[data-curves-note]');
+  const curvesSummary = $('#curves-summary');
+  const tableCells = tableRows.map((row) =>
+    [...row.querySelectorAll<HTMLElement>('[data-curves-cell]')].map((cell) => ({
+      level: cell.querySelector<HTMLElement>('.curves__level')!,
+      dir: cell.querySelector<HTMLElement>('.curves__dir')!,
+    })),
+  );
+  const rangeEls = [...document.querySelectorAll<HTMLElement>('[data-range-start]')];
+  const edgeEls = [...document.querySelectorAll<HTMLElement>('[data-edge]')];
+
+  const readChronotype = (): Chronotype => {
+    try {
+      const stored = localStorage.getItem(CHRONO_KEY);
+      return isChronotype(stored) ? stored : DEFAULT_CHRONOTYPE;
+    } catch {
+      return DEFAULT_CHRONOTYPE;
+    }
+  };
+  const chrono = { shift: shiftOf(readChronotype()) };
+  let shiftTween: gsap.core.Tween | null = null;
+
+  const drawCurves = (shift: number) => {
+    for (const p of curvePaths) p.el.setAttribute('d', curvePath(p.id, shift));
+    scrubPhases.setAttribute('transform', `translate(${((shift / 60) * scrubHour).toFixed(1)} 0)`);
+  };
+  const writeChronoText = (shift: number) => {
+    chronoHint.textContent = `Sleeps around ${sleepWindow(shift)}`;
+    curvesNote.textContent = rhythmNote(shift);
+    curvesSummary.textContent = rhythmSummary(shift);
+    rhythmCells(shift).forEach((row, i) =>
+      row.forEach((cell, j) => {
+        const el = tableCells[i]?.[j];
+        if (!el) return;
+        el.level.textContent = cell.level;
+        el.dir.textContent = cell.trend;
+      }),
+    );
+    for (const el of rangeEls) {
+      el.textContent = `${clockLabel(Number(el.dataset.rangeStart), shift)}–${clockLabel(Number(el.dataset.rangeEnd), shift)}`;
+    }
+    for (const el of edgeEls) el.textContent = clockLabel(Number(el.dataset.edge), shift);
+  };
+  const applyShift = (target: number, animate: boolean) => {
+    shiftTween?.kill();
+    if (!animate || reducedMotion) {
+      chrono.shift = target;
+      drawCurves(target);
+      writeChronoText(target);
+      return;
+    }
+    shiftTween = gsap.to(chrono, {
+      shift: target,
+      duration: 0.9,
+      ease: 'power2.inOut',
+      onUpdate: () => drawCurves(chrono.shift),
+      onComplete: () => writeChronoText(target),
+    });
+  };
+
+  const initialType = readChronotype();
+  for (const input of chronoInputs) {
+    input.checked = input.value === initialType;
+    input.addEventListener('change', () => {
+      if (!input.checked || !isChronotype(input.value)) return;
+      try {
+        localStorage.setItem(CHRONO_KEY, input.value);
+      } catch {
+        // Private mode: the choice simply lasts for this visit.
+      }
+      applyShift(shiftOf(input.value), true);
+    });
+  }
+  if (chrono.shift !== 0) applyShift(chrono.shift, false);
+
   jumpForm.addEventListener('submit', (event) => {
     event.preventDefault();
     const target = parseTime(jumpInput.value);
@@ -230,6 +318,7 @@ export function start() {
   let lastDraw = '';
 
   let lastMinute = -1;
+  let lastShift = NaN;
   let lastLive: boolean | null = null;
   let lastPhase = '';
 
@@ -289,11 +378,14 @@ export function start() {
     // On phones the form sits behind the timeline's big digits.
     const onPhone = scrubber.visible();
     const rect = (onPhone ? scrubTime : clockEl()).getBoundingClientRect(); // read before any writes
-    const minutes = dial.minutes();
+    const minutes = dial.minutes(); // clock time
+    // The body runs `shift` minutes behind the clock (ahead for early birds).
+    const shift = chrono.shift;
+    const body = minutes - shift;
     // The sky follows the scroll while travelling through the journey,
     // the dial (and everything around it) keeps its own time.
-    const scrolled = journey ? journey.minutes(minutes) : null;
-    const shown = scrolled ?? minutes;
+    const scrolled = journey ? journey.minutes(body) : null;
+    const shown = scrolled ?? body;
     const palette = paletteAt(shown);
     const energy = curveValue('alertness', shown);
     const bg = rgbToHex(palette.bg);
@@ -348,12 +440,13 @@ export function start() {
       },
       Math.min(deltaMs, 100) / 1000,
     );
-    journey?.update(scrolled);
+    journey?.update(scrolled, shift);
     ambient?.update(shown);
     scrubber.update(minutes, live);
 
     const minute = Math.floor(minutes);
-    if (minute !== lastMinute || live !== lastLive) {
+    const shiftMinute = Math.round(shift);
+    if (minute !== lastMinute || live !== lastLive || shiftMinute !== lastShift) {
       const time = formatTime(minutes);
       dialTime.textContent = time;
       dialHint.textContent = live ? 'Drag to travel' : 'Exploring';
@@ -362,7 +455,7 @@ export function start() {
       handle.setAttribute('aria-valuenow', String(minute));
       handle.setAttribute('aria-valuetext', time);
       if (document.activeElement !== jumpInput) jumpInput.value = time;
-      for (const t of trendEls) t.el.textContent = TREND_LABELS[curveTrend(t.id, minutes)];
+      for (const t of trendEls) t.el.textContent = TREND_LABELS[curveTrend(t.id, body)];
       // Mark the table row covering the time the clock shows.
       const row = tableRows[Math.min(tableRows.length - 1, Math.floor(minute / 180))] ?? null;
       if (row !== currentRow) {
@@ -372,10 +465,11 @@ export function start() {
       }
       if (!live && !intro && lastLive !== null) syncUrl(minutes);
       lastMinute = minute;
+      lastShift = shiftMinute;
       lastLive = live;
     }
 
-    const phase = phaseAt(minutes);
+    const phase = phaseAt(body);
     if (phase.id !== lastPhase) {
       showPhase(phase, lastPhase === '' || intro || dial.isDragging());
       if (lastPhase !== '' && !live && !intro) announce(minutes, phase);

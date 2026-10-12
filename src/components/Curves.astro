@@ -1,11 +1,12 @@
 ---
-import { CURVES, TREND_LABELS, curveTrend, curveValue, describeCurve, levelLabel, sampleCurve, type CurveId } from '../lib/circadian';
+import { CURVES, type CurveId } from '../lib/circadian';
+import { CURVE_H, CURVE_W, curvePath, rhythmCells, rhythmNote, rhythmSummary } from '../lib/rhythm-view';
 import { formatTime } from '../lib/time';
 
-// Drawn once at build time; only the playhead moves at runtime.
-const W = 1440;
-const H = 100;
-const y = (v: number) => H - 6 - v * (H - 14);
+// Drawn at build time for the default chronotype; scripts/app.ts redraws the
+// paths and text through the same functions when the chronotype changes.
+const W = CURVE_W;
+const H = CURVE_H;
 
 const STYLE: Record<CurveId, string> = {
   alertness: 'curve--alertness',
@@ -16,27 +17,11 @@ const STYLE: Record<CurveId, string> = {
 
 // Text alternatives: a description of every curve's shape (from the model, so
 // it always matches the chart) and a table every three hours.
-const summary = CURVES.map((c) => describeCurve(c.id)).join(' ');
-const rows = Array.from({ length: 8 }, (_, i) => {
-  const m = i * 180;
-  return {
-    m,
-    time: formatTime(m),
-    // The level is already in words, so a flat stretch reads "steady", not "low, low".
-    cells: CURVES.map((c) => {
-      const trend = curveTrend(c.id, m);
-      return { level: levelLabel(curveValue(c.id, m)), trend: trend === 'low' ? 'steady' : TREND_LABELS[trend] };
-    }),
-  };
-});
+const summary = rhythmSummary();
+const cells = rhythmCells();
+const rows = cells.map((row, i) => ({ m: i * 180, time: formatTime(i * 180), cells: row }));
 
-const paths = CURVES.map((c) => ({
-  ...c,
-  className: STYLE[c.id],
-  d: sampleCurve(c.id, 10)
-    .map(([m, v], i) => `${i ? 'L' : 'M'}${m},${y(v).toFixed(1)}`)
-    .join(' '),
-}));
+const paths = CURVES.map((c) => ({ ...c, className: STYLE[c.id], d: curvePath(c.id) }));
 ---
 
 <figure class="curves" aria-label="Your daily rhythm: four curves over 24 hours" aria-describedby="curves-summary" data-curves>
@@ -55,14 +40,12 @@ const paths = CURVES.map((c) => ({
         ))
       }
     </ul>
-    <p class="curves__note">
-      Typical rhythm for someone who sleeps around 23:00–07:00. Relative, not measured.
-    </p>
+    <p class="curves__note" data-curves-note>{rhythmNote()}</p>
   </figcaption>
 
   <div class="curves__plot">
     <svg viewBox={`0 0 ${W} ${H}`} preserveAspectRatio="none" aria-hidden="true">
-      {paths.map((p) => <path class:list={['curve', p.className]} d={p.d} vector-effect="non-scaling-stroke" />)}
+      {paths.map((p) => <path class:list={['curve', p.className]} d={p.d} vector-effect="non-scaling-stroke" data-curve-path={p.id} />)}
       <line class="curves__playhead" x1="0" y1="0" x2="0" y2={H} vector-effect="non-scaling-stroke" data-playhead />
     </svg>
     <div class="curves__axis" aria-hidden="true">
@@ -87,7 +70,7 @@ const paths = CURVES.map((c) => ({
               <tr data-curves-row={r.m}>
                 <th scope="row">{r.time}</th>
                 {r.cells.map((c) => (
-                  <td>
+                  <td data-curves-cell>
                     <span class="curves__level">{c.level}</span>
                     <span class="curves__dir">{c.trend}</span>
                   </td>

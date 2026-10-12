@@ -30,11 +30,11 @@ Everything between today's prototype and an Awwwards submission. Ordered by prio
 
 ## 1. Content & science
 
-- [x] **P0** Find and verify a reliable source for every claim in `docs/CONTENT.md` (24 references; copy adjusted where it went beyond the evidence)
+- [x] **P0** Find and verify a reliable source for every claim in `docs/CONTENT.md` (26 references; copy adjusted where it went beyond the evidence)
 - [ ] **P0** Read the full text for the claims marked 🟡 in `docs/CONTENT.md` (cortisol peak window, exact temperature minimum/maximum times, page numbers, full author lists)
 - [ ] **P0** Have someone with a medical or biology background proofread the copy
 - [ ] **P1** Per-hour details: one fact and one tip for each of the 24 hours, inside the 8 phases
-- [ ] **P1** Chronotype toggle ("Are you a morning or an evening person?") that shifts every curve and phase by ±1–2 hours
+- [x] **P1** Chronotype toggle ("Your clock": Early bird / In between / Night owl) that shifts every curve, phase, form, colour and sound by ±1 hour; sources [25], [26]; choice remembered per browser
 - [ ] **P1** Short "Why this matters" intro text for first-time visitors (without a pop-up)
 - [ ] **P2** Dutch translation (`/nl/`), with language switch
 - [ ] **P2** Extra curves: heart rate, blood pressure, digestion (only if well sourced)

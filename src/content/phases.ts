@@ -1,7 +1,8 @@
 /**
  * The eight phases of the day. Copy is deliberately conservative: every claim
  * is traceable to a source in docs/CONTENT.md. Change a claim, update that file.
- * Times assume someone who sleeps roughly 23:00–07:00.
+ * Times assume someone who sleeps roughly 23:00–07:00; the chronotype toggle
+ * shifts the whole rhythm an hour either way (lib/chronotype.ts).
  */
 
 export interface Phase {

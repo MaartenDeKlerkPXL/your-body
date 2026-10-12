@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { formatTime, parseTime, shortestDelta, wrapMinutes } from '../src/lib/time';
-import { curveValue, curveTrend, describeCurve, levelLabel } from '../src/lib/circadian';
+import { CURVES, curveValue, curveTrend, describeCurve, levelLabel } from '../src/lib/circadian';
 import { contrast, paletteAt } from '../src/lib/palette';
 import { PHASES, phaseAt } from '../src/content/phases';
 import { SOURCES } from '../src/content/sources';
@@ -175,5 +175,40 @@ describe('curve descriptions', () => {
     expect(levelLabel(0.05)).toBe('very low');
     expect(levelLabel(0.5)).toBe('moderate');
     expect(levelLabel(0.95)).toBe('very high');
+  });
+});
+
+import { CHRONOTYPES, clockLabel, shiftOf, sleepWindow } from '../src/lib/chronotype';
+
+describe('chronotype', () => {
+  it('runs the night owl an hour later and the early bird an hour earlier', () => {
+    expect(shiftOf('late')).toBe(60);
+    expect(shiftOf('early')).toBe(-60);
+    expect(shiftOf('between')).toBe(0);
+    expect(CHRONOTYPES.map((c) => c.id)).toEqual(['early', 'between', 'late']);
+  });
+
+  it('moves the sleep window and the curve descriptions with the shift', () => {
+    expect(sleepWindow(0)).toBe('23:00–07:00');
+    expect(sleepWindow(60)).toBe('00:00–08:00');
+    expect(sleepWindow(-60)).toBe('22:00–06:00');
+    expect(describeCurve('melatonin', 60)).toMatch(/peaks around 04:00/);
+    expect(describeCurve('melatonin', -60)).toMatch(/peaks around 02:00/);
+  });
+
+  it('labels chapter edges on the clock, keeping the end of the day as 24:00', () => {
+    expect(clockLabel(21 * 60, 60)).toBe('22:00');
+    expect(clockLabel(24 * 60, 60)).toBe('01:00');
+    expect(clockLabel(24 * 60, 0)).toBe('24:00');
+    expect(clockLabel(0, -60)).toBe('23:00');
+  });
+
+  it('reads the model the same either side of midnight, since body time can go negative', () => {
+    for (const c of CURVES) {
+      for (const m of [-90, -60, 30]) expect(curveValue(c.id, m)).toBeCloseTo(curveValue(c.id, m + 1440), 5);
+    }
+    expect(formAt(-60)).toEqual(formAt(1380));
+    expect(paletteAt(-60)).toEqual(paletteAt(1380));
+    expect(phaseAt(-60).id).toBe(phaseAt(1380).id);
   });
 });
