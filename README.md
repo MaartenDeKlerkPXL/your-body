@@ -11,6 +11,7 @@ Gebouwd met het oog op een Awwwards Site of the Day.
 | Framework | [Astro](https://astro.build) (statische output) + TypeScript |
 | Animatie | GSAP: Draggable + InertiaPlugin (draaiknop), SplitText (titels), ScrollTrigger (reveals) |
 | Scroll | [Lenis](https://lenis.darkroom.engineering) smooth scroll |
+| Geluid | Web Audio API, volledig generatief (geen audiobestanden) |
 | WebGL | gewone WebGL (geen library) met een eigen fragment shader, compileert op de achtergrond |
 | Fonts | Bricolage Grotesque (variabel, subset tot de gebruikte tekens) + Instrument Sans (Fontsource), allebei self-hosted en preloaded |
 | Tests | Vitest |
@@ -48,6 +49,7 @@ src/
   lib/form.ts           de vorm per fase (parameters voor de shader), met overgangen
   lib/type.ts           vaste letterdikte en -breedte per fase
   lib/spark.ts          geometrie van de mini-grafieken per hoofdstuk
+  lib/sound.ts          klank per fase: akkoord, filter, lucht, klokjes, puls
   lib/time.ts           tijdhulpjes
   scripts/app.ts        regie: frame-loop, fases, URL, live/verkenmodus
   scripts/dial.ts       24u-draaiknop (slepen, gooien, toetsenbord)
@@ -55,6 +57,7 @@ src/
   scripts/intro.ts      openingsanimatie
   scripts/journey.ts    scroll-reis: scrollpositie → tijd, reveals, voortgangsbalk
   scripts/sky.ts        WebGL-achtergrond (adaptieve kwaliteit)
+  scripts/ambient.ts    generatief ambient geluid (Web Audio)
   components/           Dial, Scrubber, Curves, Journey
   pages/                index, sources
 docs/
@@ -68,4 +71,5 @@ Wat er nog moet gebeuren staat in [`TODO.md`](TODO.md).
 - `?t=03:00` in de URL opent de site meteen op dat uur (deelbaar, en handig voor de jury).
 - Draaiknop met toetsenbord: ←/→ ±15 min, Page Up/Down ±1 uur, Home/End begin/einde van de dag.
 - `prefers-reduced-motion` wordt gerespecteerd: geen intro, geen shader-beweging, geen inertie, geen tekstanimaties.
+- Geluid staat standaard **uit** en start alleen na een klik op de knop linksonder. Het volgt de tijd op het scherm (draaiknop of scroll-reis) en pauzeert als het tabblad op de achtergrond staat. Op een iPhone met de stille-modus-schakelaar aan blijft Web Audio stil.
 - De openingsanimatie speelt één keer per sessie en is over te slaan met een klik, toets of scroll. Opnieuw zien: open een nieuw tabblad of wis `sessionStorage`.

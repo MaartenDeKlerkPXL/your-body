@@ -68,19 +68,24 @@ function mix(a: Form, b: Form, t: number): Form {
   return out;
 }
 
-export function formAt(minutes: number): Form {
+/**
+ * Which phases are showing at a time: phase `from` blends into `to` by `t`.
+ * Each phase holds alone for most of its three hours; around a boundary it
+ * is halfway with its neighbour exactly at the boundary. Shared by the forms
+ * and the ambient sound, so picture and sound always change together.
+ */
+export function phaseBlend(minutes: number): { from: number; to: number; t: number } {
   const hours = ((((minutes / 60) % 24) + 24) % 24);
   const n = FORMS.length;
   const span = 24 / n;
   const k = Math.min(n - 1, Math.floor(hours / span));
   const u = (hours - k * span) / span;
-  const current = FORMS[k];
-  if (u < BLEND) {
-    // Halfway with the previous form at the boundary, fully ours by u = BLEND.
-    return mix(FORMS[(k - 1 + n) % n], current, smooth(0.5 + u / (2 * BLEND)));
-  }
-  if (u > 1 - BLEND) {
-    return mix(current, FORMS[(k + 1) % n], smooth((u - (1 - BLEND)) / (2 * BLEND)));
-  }
-  return current;
+  if (u < BLEND) return { from: (k - 1 + n) % n, to: k, t: smooth(0.5 + u / (2 * BLEND)) };
+  if (u > 1 - BLEND) return { from: k, to: (k + 1) % n, t: smooth((u - (1 - BLEND)) / (2 * BLEND)) };
+  return { from: k, to: k, t: 1 };
+}
+
+export function formAt(minutes: number): Form {
+  const { from, to, t } = phaseBlend(minutes);
+  return from === to ? FORMS[to] : mix(FORMS[from], FORMS[to], t);
 }

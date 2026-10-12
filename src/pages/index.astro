@@ -102,6 +102,11 @@ const first = PHASES[0];
     </footer>
   </div>
 
+  <button class="sound" type="button" aria-pressed="false" aria-label="Ambient sound" data-sound data-intro-chrome>
+    <span class="sound__bars" aria-hidden="true"><i></i><i></i><i></i><i></i></span>
+    <span class="sound__label" aria-hidden="true">Sound</span>
+  </button>
+
   <p class="visually-hidden" aria-live="polite" data-announce></p>
 </Base>
 
@@ -271,6 +276,103 @@ const first = PHASES[0];
     }
     50% {
       box-shadow: 0 0 0 6px transparent;
+    }
+  }
+
+  /* --- Sound toggle: fixed bottom-left, above the progress bar on phones -- */
+  .sound {
+    position: fixed;
+    z-index: 4;
+    left: var(--space-4);
+    bottom: var(--space-4);
+    display: inline-flex;
+    align-items: center;
+    gap: var(--space-2);
+    min-height: 40px;
+    padding: 0 14px;
+    font: inherit;
+    font-size: var(--text-sm);
+    font-weight: 600;
+    color: var(--ink);
+    background: color-mix(in oklab, var(--bg) 78%, transparent);
+    border: 1px solid color-mix(in oklab, var(--ink) 20%, transparent);
+    border-radius: 999px;
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    cursor: pointer;
+    transition:
+      bottom var(--duration-layout) var(--ease-out),
+      border-color var(--duration-micro) var(--ease-out);
+  }
+
+  .sound:hover {
+    border-color: color-mix(in oklab, var(--ink) 45%, transparent);
+  }
+
+  .sound__bars {
+    display: inline-flex;
+    align-items: center;
+    gap: 2px;
+    height: 14px;
+  }
+
+  .sound__bars i {
+    width: 2px;
+    height: 100%;
+    border-radius: 2px;
+    background: currentColor;
+    transform: scaleY(0.25);
+    transition: transform var(--duration-transition) var(--ease-out);
+  }
+
+  .sound[aria-pressed='true'] .sound__bars i {
+    animation: sound-bar 1.4s var(--ease-in-out) infinite;
+  }
+
+  .sound[aria-pressed='true'] .sound__bars i:nth-child(2) {
+    animation-delay: -0.35s;
+  }
+
+  .sound[aria-pressed='true'] .sound__bars i:nth-child(3) {
+    animation-delay: -0.7s;
+  }
+
+  .sound[aria-pressed='true'] .sound__bars i:nth-child(4) {
+    animation-delay: -1.05s;
+  }
+
+  @keyframes sound-bar {
+    0%,
+    100% {
+      transform: scaleY(0.3);
+    }
+    50% {
+      transform: scaleY(1);
+    }
+  }
+
+  /* Without motion the bars simply stand tall when sound is on. */
+  @media (prefers-reduced-motion: reduce) {
+    .sound[aria-pressed='true'] .sound__bars i {
+      animation: none;
+      transform: scaleY(0.85);
+    }
+  }
+
+  /* Phones: an icon button that shares the bottom row with the journey's
+     progress bar (which starts just right of it), so it never covers text. */
+  @media (max-width: 719px) {
+    .sound {
+      left: var(--space-3);
+      bottom: var(--space-3);
+      width: 44px;
+      height: 44px;
+      padding: 0;
+      justify-content: center;
+    }
+
+    .sound__label {
+      display: none;
     }
   }
 

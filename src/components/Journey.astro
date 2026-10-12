@@ -591,7 +591,8 @@ const chapters = PHASES.map((p) => {
     .hud {
       top: auto;
       bottom: var(--space-3);
-      left: var(--space-3);
+      left: calc(var(--space-3) + 52px); /* room for the sound button */
+      min-height: 44px;
       right: var(--space-3);
       translate: none;
       grid-template-columns: auto 1fr;

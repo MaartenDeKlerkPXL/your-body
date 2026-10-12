@@ -5,6 +5,7 @@ import { contrast, paletteAt } from '../src/lib/palette';
 import { PHASES, phaseAt } from '../src/content/phases';
 import { SOURCES } from '../src/content/sources';
 import { FORMS, formAt } from '../src/lib/form';
+import { SOUNDS, midiToHz, soundAt } from '../src/lib/sound';
 
 describe('time', () => {
   it('wraps and formats', () => {
@@ -115,5 +116,36 @@ describe('forms', () => {
         expect(Math.abs(a[k] - b[k])).toBeLessThan(0.05);
       }
     }
+  });
+});
+
+describe('ambient sound', () => {
+  it('has one sound per phase', () => {
+    expect(SOUNDS.length).toBe(PHASES.length);
+  });
+
+  it('crossfades voices that always sum to one', () => {
+    for (let m = 0; m < 1440; m += 3) {
+      const { voices } = soundAt(m);
+      expect(voices.reduce((a, b) => a + b, 0)).toBeCloseTo(1, 6);
+      expect(voices.filter((v) => v > 0).length).toBeLessThanOrEqual(2);
+    }
+  });
+
+  it('changes smoothly, including across midnight', () => {
+    for (let m = 0; m < 1440; m++) {
+      const a = soundAt(m);
+      const b = soundAt(m + 1);
+      expect(Math.abs(a.params.cutoff - b.params.cutoff) / a.params.cutoff).toBeLessThan(0.05);
+      a.voices.forEach((v, i) => expect(Math.abs(v - b.voices[i])).toBeLessThan(0.05));
+    }
+  });
+
+  it('is darker at night than in the morning', () => {
+    expect(soundAt(4.5 * 60).params.cutoff).toBeLessThan(soundAt(10.5 * 60).params.cutoff);
+  });
+
+  it('tunes A4 to 440 Hz', () => {
+    expect(midiToHz(69)).toBe(440);
   });
 });

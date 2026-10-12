@@ -9,6 +9,7 @@ import { createScrubber } from './scrubber';
 import { createSky, type Sky } from './sky';
 import { playIntro } from './intro';
 import type { Journey } from './journey';
+import type { Ambient } from './ambient';
 import { formAt } from '../lib/form';
 import { displayAxes } from '../lib/type';
 
@@ -244,10 +245,31 @@ export function start() {
         },
       });
     });
+  // Ambient sound: the module is fetched when idle, so the first click can
+  // start audio synchronously (Safari only allows that inside the gesture).
+  const soundButton = $<HTMLButtonElement>('[data-sound]');
+  let ambient: Ambient | null = null;
+  let ambientModule: typeof import('./ambient') | null = null;
+  const loadAmbient = () =>
+    import('./ambient').then((m) => {
+      ambientModule = m;
+      return m;
+    });
+  soundButton.addEventListener('click', async () => {
+    const on = soundButton.getAttribute('aria-pressed') !== 'true';
+    soundButton.setAttribute('aria-pressed', String(on));
+    if (!ambient) ambient = (ambientModule ?? (await loadAmbient())).createAmbient();
+    ambient.setEnabled(on);
+  });
+  const prefetch = () => {
+    startJourney();
+    loadAmbient();
+  };
+
   // Safari has no requestIdleCallback; fall back to a short timeout there.
   const idle = window.requestIdleCallback as typeof window.requestIdleCallback | undefined;
-  if (idle) idle.call(window, startJourney, { timeout: 1500 });
-  else setTimeout(startJourney, 400);
+  if (idle) idle.call(window, prefetch, { timeout: 1500 });
+  else setTimeout(prefetch, 400);
 
   // The glow drifts between the dial and the journey's stage instead of jumping.
   let focusX = window.innerWidth * 0.7;
@@ -307,6 +329,7 @@ export function start() {
       Math.min(deltaMs, 100) / 1000,
     );
     journey?.update(scrolled);
+    ambient?.update(shown);
     scrubber.update(minutes, live);
 
     const minute = Math.floor(minutes);
