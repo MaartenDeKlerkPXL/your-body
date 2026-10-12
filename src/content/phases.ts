@@ -1,6 +1,6 @@
 /**
  * The eight phases of the day. Copy is deliberately conservative: every claim
- * must be traceable to a source listed in docs/CONTENT.md before launch.
+ * is traceable to a source in docs/CONTENT.md. Change a claim, update that file.
  * Times assume someone who sleeps roughly 23:00–07:00.
  */
 
@@ -23,7 +23,7 @@ export const PHASES: Phase[] = [
     name: 'Deep night',
     headline: 'Repair mode.',
     body: 'Melatonin is close to its highest, and the first half of the night holds most of your deep, slow-wave sleep. That deep sleep is when much of your growth hormone is released.',
-    tip: 'Keep the bedroom dark and cool. Even dim light can suppress melatonin.',
+    tip: 'Keep the bedroom dark. Even ordinary room light can suppress melatonin.',
   },
   {
     id: 'low-tide',
@@ -31,7 +31,7 @@ export const PHASES: Phase[] = [
     end: 6,
     name: 'Low tide',
     headline: 'Your lowest point.',
-    body: 'Core body temperature reaches its daily minimum, a couple of hours before you would naturally wake. Dreams get longer: REM sleep fills more of the second half of the night.',
+    body: 'Core body temperature reaches its daily low in the early morning, before you would naturally wake. Dreams get longer: most REM sleep falls in the second half of the night.',
     tip: 'Awake right now? Skip the bright screen, so your clock doesn’t mistake it for morning.',
   },
   {
@@ -40,8 +40,8 @@ export const PHASES: Phase[] = [
     end: 9,
     name: 'First light',
     headline: 'Waking up, chemically.',
-    body: 'Morning light reaching your eyes switches melatonin production off. Cortisol surges in the first 30 to 45 minutes after you wake, helping you get going.',
-    tip: 'Get outside daylight within an hour of waking. It anchors your clock for the whole day.',
+    body: 'Light reaching your eyes helps shut melatonin down. Cortisol rises sharply in the first 30 to 45 minutes after you wake, helping you get going.',
+    tip: 'Get outside in the morning. Early light pulls your clock earlier and keeps it on time.',
   },
   {
     id: 'morning-peak',
@@ -59,7 +59,7 @@ export const PHASES: Phase[] = [
     name: 'Afternoon dip',
     headline: 'The slump is built in.',
     body: 'That early-afternoon drowsiness isn’t only lunch. A dip in alertness around this time is part of your daily rhythm, meal or no meal.',
-    tip: 'A nap of 10 to 20 minutes, or a walk in daylight, lifts you without stealing from tonight’s sleep.',
+    tip: 'A nap of about 10 minutes lifts alertness straight away. Much longer naps can leave you groggy.',
   },
   {
     id: 'second-wind',
@@ -77,7 +77,7 @@ export const PHASES: Phase[] = [
     name: 'Evening',
     headline: 'Wide awake, for now.',
     body: 'Your temperature peaks and begins to fall. Strangely, the few hours before your usual bedtime are when falling asleep is hardest: the so-called wake maintenance zone.',
-    tip: 'Dim the lights after sunset and finish your last big meal a few hours before bed.',
+    tip: 'Dim the lights in the evening and avoid big meals close to bedtime.',
   },
   {
     id: 'wind-down',
@@ -85,7 +85,7 @@ export const PHASES: Phase[] = [
     end: 24,
     name: 'Wind-down',
     headline: 'Darkness means sleep.',
-    body: 'Melatonin starts rising about two hours before your usual bedtime while your core temperature drops, preparing your body for sleep.',
+    body: 'Melatonin starts rising two to three hours before your usual bedtime, and your body sheds heat through your hands and feet, preparing you for sleep.',
     tip: 'Turn screens down and keep a regular bedtime. Consistency matters, not just hours.',
   },
 ];

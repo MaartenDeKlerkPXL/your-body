@@ -21,7 +21,8 @@ Everything between today's prototype and an Awwwards submission. Ordered by prio
 
 ## 1. Content & science
 
-- [ ] **P0** Find and verify a reliable source for every claim in `docs/CONTENT.md` (review papers, textbooks, university or government sources, no blogs)
+- [x] **P0** Find and verify a reliable source for every claim in `docs/CONTENT.md` (24 references; copy adjusted where it went beyond the evidence)
+- [ ] **P0** Read the full text for the claims marked 🟡 in `docs/CONTENT.md` (cortisol peak window, exact temperature minimum/maximum times, page numbers, full author lists)
 - [ ] **P0** Publish the reference list on `/sources` with links
 - [ ] **P0** Have someone with a medical or biology background proofread the copy
 - [ ] **P1** Per-hour details: one fact and one tip for each of the 24 hours, inside the 8 phases
