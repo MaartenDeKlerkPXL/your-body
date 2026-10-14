@@ -214,7 +214,7 @@ export function createJourney(root: HTMLElement, { reducedMotion, onBack }: Opti
         start: 'top 85%',
         once: true,
         onEnter: () => {
-          const split = SplitText.create(name, { type: 'chars', mask: 'chars' });
+          const split = SplitText.create(name, { type: 'words,chars', mask: 'chars' });
           gsap.set(name, { opacity: 1 });
           gsap.from(split.chars, {
             yPercent: 110,

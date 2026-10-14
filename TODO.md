@@ -58,7 +58,7 @@ Everything between today's prototype and an Awwwards submission. Ordered by prio
 - [ ] **P1** Fine-tune the 24-hour palette on real screens (OLED phone, laptop, external monitor)
 - [x] **P1** Micro-interactions: ticks light up around the knob, an hour detent flash, magnetic knob, press squash and settle ripple, sliding chronotype thumb, needle pop and a faint vibration per hour on phones
 - [ ] **P2** Custom cursor that shows the time when hovering over the dial
-- [ ] **P2** Phase transition effect in the shader (a soft "pulse" when crossing into a new phase)
+- [x] **P2** Phase transition effect in the shader: a wave of light outward when time moves forward, inward when it goes back (dial, scroll, live and chronotype; not in the intro or with reduced motion)
 
 ## 4. Features
 

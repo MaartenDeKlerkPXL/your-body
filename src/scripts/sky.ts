@@ -45,6 +45,11 @@ const fragment = /* glsl */ `
   uniform float uStars;
   uniform float uBreathDepth;
 
+  // Phase change: a ring of light travelling through the sky (see pulse()).
+  uniform float uPulseR;
+  uniform float uPulseW;
+  uniform float uPulseA;
+
   varying vec2 vUv;
 
   // 3D simplex noise, Ashima Arts / Stefan Gustavson (MIT).
@@ -132,6 +137,15 @@ const fragment = /* glsl */ `
     float radius = 0.55 + 0.04 * uBreath + 0.1 * uEnergy;
 
     vec3 col = uBg;
+
+    // The ring is bent by the same smoke, so it reads as a breath, not a circle.
+    float pulse = 0.0;
+    if (uPulseA > 0.001) {
+      pulse = smoothstep(uPulseW, 0.0, abs(d - uPulseR + n * 0.12)) * uPulseA;
+      // Light pooling behind the wave as it leaves.
+      pulse += smoothstep(uPulseR, 0.0, d) * uPulseA * 0.18;
+    }
+
     // The soft body glow steps back while a phase's form is on stage.
     float body = smoothstep(radius + 0.45, 0.0, d + n * 0.22);
     col = mix(col, uGlow, body * 0.9 * (1.0 - 0.55 * uForm));
@@ -222,6 +236,14 @@ const fragment = /* glsl */ `
       col = mix(col, mix(uAccent, vec3(1.0), 0.6), stars * around * 0.8 * uStars * uForm);
     }
 
+    // On light skies the wave is light itself: brighter than the background,
+    // so the dark ink only gains contrast. On dark skies the glow is too close
+    // to the background to show, so the wave leans on the accent; at most a
+    // quarter of it, in a passing ring, which keeps light ink well above AA.
+    float lightSky = step(0.45, dot(uBg, vec3(0.2126, 0.7152, 0.0722)));
+    vec3 waveCol = mix(mix(uGlow, uAccent, 0.55), mix(uGlow, vec3(1.0), 0.65), lightSky);
+    col = mix(col, waveCol, clamp(pulse, 0.0, 1.0) * mix(0.45, 0.55, lightSky));
+
     col += (n * 0.5) * 0.08 * uGlow;
     col *= mix(1.0, 0.86, smoothstep(0.5, 1.5, length(p)));
 
@@ -249,6 +271,8 @@ export interface SkyState {
 
 export interface Sky {
   render(state: SkyState, deltaSeconds: number): void;
+  /** A new phase begins: a wave of light outward (forward in time) or inward (back). */
+  pulse(direction: 1 | -1): void;
   destroy(): void;
 }
 
@@ -344,6 +368,14 @@ export function createSky(canvas: HTMLCanvasElement, reducedMotion: boolean): Sk
   let ready = false;
   let breathPhase = 0;
 
+  // Phase-change wave. Its own clock (real seconds), so it runs at the same
+  // pace at night as by day.
+  const PULSE_SECONDS = 2.4;
+  const PULSE_GAP = 0.6; // when phases fly by, at most one new wave per this
+  let pulseT = -1; // 0–1 while a wave runs
+  let pulseDir: 1 | -1 = 1;
+  let sincePulse = Infinity;
+
   const fail = () => {
     failed = true;
     canvas.classList.remove('is-ready'); // keep the CSS gradient
@@ -370,6 +402,23 @@ export function createSky(canvas: HTMLCanvasElement, reducedMotion: boolean): Sk
       }
       adapt(dt);
 
+      sincePulse += dt;
+      let pulseR = 0;
+      let pulseW = 0;
+      let pulseA = 0;
+      if (pulseT >= 0) {
+        pulseT += dt / PULSE_SECONDS;
+        if (pulseT >= 1) pulseT = -1;
+        else {
+          const e = 1 - (1 - pulseT) ** 3; // fast start, long glide
+          const travel = pulseDir === 1 ? e : 1 - e;
+          pulseR = 0.08 + travel * 1.9;
+          pulseW = 0.06 + travel * 0.34;
+          // Swells in quickly, fades over the rest of its way.
+          pulseA = Math.min(1, pulseT / 0.08) * (1 - pulseT) ** 1.6;
+        }
+      }
+
       const scale = canvas.width / window.innerWidth;
       const form = state.form;
       setUniform('uTime', time);
@@ -395,12 +444,21 @@ export function createSky(canvas: HTMLCanvasElement, reducedMotion: boolean): Sk
       setUniform('uDissolve', form.dissolve);
       setUniform('uStars', form.stars);
       setUniform('uBreathDepth', form.breath);
+      setUniform('uPulseR', pulseR);
+      setUniform('uPulseW', pulseW);
+      setUniform('uPulseA', pulseA);
       gl.drawArrays(gl.TRIANGLES, 0, 3);
 
       if (!ready) {
         ready = true;
         canvas.classList.add('is-ready'); // fade in over the CSS gradient
       }
+    },
+    pulse(direction) {
+      if (reducedMotion || sincePulse < PULSE_GAP) return;
+      sincePulse = 0;
+      pulseT = 0;
+      pulseDir = direction;
     },
     destroy() {
       window.removeEventListener('resize', resize);

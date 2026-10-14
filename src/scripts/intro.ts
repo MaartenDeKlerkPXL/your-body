@@ -83,7 +83,7 @@ export function playIntro(
   // 5. …and the story appears once the time has landed.
   // Built at that moment because the split needs the final phase name.
   tl.add(() => {
-    nameSplit = SplitText.create(parts.phaseName, { type: 'chars', mask: 'chars' });
+    nameSplit = SplitText.create(parts.phaseName, { type: 'words,chars', mask: 'chars' });
     gsap.set(parts.phaseName, { autoAlpha: 1 });
     outro = gsap
       .timeline()

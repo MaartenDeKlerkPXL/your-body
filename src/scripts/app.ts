@@ -3,7 +3,7 @@ import { SplitText } from 'gsap/SplitText';
 import { CURVES, TREND_LABELS, curveTrend, curveValue } from '../lib/circadian';
 import { phaseAt, type Phase } from '../content/phases';
 import { paletteAt, rgbToHex, luminance } from '../lib/palette';
-import { formatTime, nowMinutes, parseTime } from '../lib/time';
+import { formatTime, nowMinutes, parseTime, shortestDelta } from '../lib/time';
 import { createDial } from './dial';
 import { createDialFeel, type DialFeel } from './dial-feel';
 import { createScrubber } from './scrubber';
@@ -302,7 +302,7 @@ export function start() {
       .to([nameEl, copyEl], { autoAlpha: 0, y: -10, duration: 0.22, ease: 'power2.in', stagger: 0.03 })
       .add(() => {
         writePhase(phase);
-        split = SplitText.create(nameEl, { type: 'chars', mask: 'chars' });
+        split = SplitText.create(nameEl, { type: 'words,chars', mask: 'chars' });
         gsap.set([nameEl, copyEl], { autoAlpha: 1, y: 0 });
         phaseAnimation = gsap
           .timeline()
@@ -346,6 +346,9 @@ export function start() {
   let lastShift = NaN;
   let lastLive: boolean | null = null;
   let lastPhase = '';
+  // The phase the sky shows (dial or scroll), for the transition wave.
+  let skyPhase = '';
+  let lastShown = 0;
 
   // The journey (Lenis, ScrollTrigger, reveals) loads as its own chunk once the
   // browser is idle: it lives below the fold and isn't needed for first paint.
@@ -465,6 +468,15 @@ export function start() {
       },
       Math.min(deltaMs, 100) / 1000,
     );
+    // A new phase in the sky, by any route (dial, scroll, live time, or the
+    // chronotype), sends a wave of light through it; not while the intro
+    // races through the day.
+    const shownPhase = phaseAt(shown).id;
+    if (shownPhase !== skyPhase) {
+      if (skyPhase !== '' && !intro) sky?.pulse(shortestDelta(lastShown, shown) >= 0 ? 1 : -1);
+      skyPhase = shownPhase;
+    }
+    lastShown = shown;
     journey?.update(scrolled, shift);
     ambient?.update(shown);
     scrubber.update(minutes, live);
