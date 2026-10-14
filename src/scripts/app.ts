@@ -5,6 +5,7 @@ import { phaseAt, type Phase } from '../content/phases';
 import { paletteAt, rgbToHex, luminance } from '../lib/palette';
 import { formatTime, nowMinutes, parseTime } from '../lib/time';
 import { createDial } from './dial';
+import { createDialFeel, type DialFeel } from './dial-feel';
 import { createScrubber } from './scrubber';
 import { createSky, type Sky } from './sky';
 import { playIntro } from './intro';
@@ -59,13 +60,16 @@ export function start() {
     nowButton.hidden = value;
   };
 
+  let feel: DialFeel | null = null;
   const dial = createDial(dialEl, {
     reducedMotion,
     onUserInput: () => {
       touched = true;
       if (!intro) setLive(false);
     },
+    onSettle: () => feel?.settle(),
   });
+  feel = createDialFeel(dialEl, dial, { reducedMotion });
   const scrubEl = $('[data-scrub]');
   const scrubber = createScrubber(scrubEl, {
     dial,
@@ -222,10 +226,27 @@ export function start() {
     });
   };
 
+  // A thumb slides behind the chosen option instead of the highlight jumping.
+  const chronoOptions = $('.chrono__options');
+  const chronoThumb = $('[data-chrono-thumb]');
+  const placeThumb = (instant = false) => {
+    const label = chronoInputs.find((i) => i.checked)?.nextElementSibling as HTMLElement | null;
+    if (!label || !label.offsetWidth) return;
+    if (instant) chronoThumb.style.transition = 'none';
+    const left = label.getBoundingClientRect().left - chronoOptions.getBoundingClientRect().left - chronoOptions.clientLeft;
+    chronoThumb.style.translate = `${left.toFixed(1)}px 0`;
+    chronoThumb.style.width = `${label.offsetWidth}px`;
+    if (instant) {
+      chronoThumb.getBoundingClientRect(); // commit the jump before transitions return
+      chronoThumb.style.transition = '';
+    }
+  };
+
   const initialType = readChronotype();
   for (const input of chronoInputs) {
     input.checked = input.value === initialType;
     input.addEventListener('change', () => {
+      placeThumb();
       if (!input.checked || !isChronotype(input.value)) return;
       try {
         localStorage.setItem(CHRONO_KEY, input.value);
@@ -236,6 +257,10 @@ export function start() {
     });
   }
   if (chrono.shift !== 0) applyShift(chrono.shift, false);
+  placeThumb(true);
+  chronoOptions.classList.add('has-thumb');
+  window.addEventListener('resize', () => placeThumb(true));
+  document.fonts?.ready.then(() => placeThumb(true));
 
   jumpForm.addEventListener('submit', (event) => {
     event.preventDefault();

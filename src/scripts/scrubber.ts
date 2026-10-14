@@ -36,6 +36,32 @@ export function createScrubber(root: HTMLElement, { dial, reducedMotion, onUserI
   const proxy = root.querySelector<HTMLElement>('[data-scrub-proxy]')!;
   const timeEl = root.querySelector<HTMLElement>('[data-scrub-time]')!;
   const hintEl = root.querySelector<HTMLElement>('[data-scrub-hint]')!;
+  const needle = root.querySelector<HTMLElement>('[data-scrub-needle]')!;
+
+  // A detent for every hour the finger drags past: the needle's cap pops,
+  // and phones that can (Android) give the faintest tick. Not during a throw,
+  // where hours fly by too fast to feel.
+  let detentHour = -1;
+  let lastBuzz = 0;
+  const detent = (minutes: number) => {
+    const hour = Math.floor(minutes / 60);
+    if (hour === detentHour) return;
+    const first = detentHour === -1;
+    detentHour = hour;
+    if (first) return;
+    if (!reducedMotion) {
+      needle.animate([{ scale: '1.6' }, { scale: '1' }], {
+        duration: 380,
+        easing: 'cubic-bezier(0.2, 0.7, 0.3, 1)',
+        pseudoElement: '::before',
+      });
+    }
+    const now = performance.now();
+    if (now - lastBuzz > 90 && 'vibrate' in navigator) {
+      lastBuzz = now;
+      navigator.vibrate(4);
+    }
+  };
 
   const hour = parseFloat(getComputedStyle(root).getPropertyValue('--hour')) || 64;
   const ppm = hour / 60; // px per minute
@@ -61,12 +87,15 @@ export function createScrubber(root: HTMLElement, { dial, reducedMotion, onUserI
     allowNativeTouchScrolling: true,
     onPressInit() {
       start = dial.minutes();
+      detentHour = -1;
       gsap.set(proxy, { x: 0 });
     },
     onPress: onUserInput,
     onDrag() {
       onUserInput();
-      dial.set(minutesAt(this.x));
+      const minutes = minutesAt(this.x);
+      dial.set(minutes);
+      detent(minutes);
     },
     onThrowUpdate() {
       dial.set(minutesAt(this.x));

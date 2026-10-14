@@ -24,9 +24,11 @@ interface Options {
   reducedMotion: boolean;
   /** Fired whenever the person moves the dial (drag, throw or keyboard). */
   onUserInput: () => void;
+  /** The arm came to rest after a drag or a throw. */
+  onSettle?: () => void;
 }
 
-export function createDial(root: HTMLElement, { reducedMotion, onUserInput }: Options): Dial {
+export function createDial(root: HTMLElement, { reducedMotion, onUserInput, onSettle }: Options): Dial {
   const arm = root.querySelector<HTMLElement>('[data-dial-arm]')!;
   const handle = root.querySelector<HTMLElement>('[data-dial-handle]')!;
   const face = root.querySelector<SVGElement>('.dial__face')!;
@@ -49,6 +51,10 @@ export function createDial(root: HTMLElement, { reducedMotion, onUserInput }: Op
     },
     onDrag: onUserInput,
     onThrowUpdate: onUserInput,
+    onRelease() {
+      if (!this.isThrowing) onSettle?.();
+    },
+    onThrowComplete: () => onSettle?.(),
   });
 
   function set(next: number, animate = false) {

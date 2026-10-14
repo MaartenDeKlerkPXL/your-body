@@ -55,6 +55,7 @@ src/
   lib/time.ts           tijdhulpjes
   scripts/app.ts        regie: frame-loop, fases, URL, live/verkenmodus
   scripts/dial.ts       24u-draaiknop (slepen, gooien, toetsenbord)
+  scripts/dial-feel.ts  gevoel van de draaiknop: licht op de streepjes, uur-detent, magnetische knop, rimpel
   scripts/scrubber.ts   tijdbalk voor telefoons (stuurt de draaiknop aan)
   scripts/intro.ts      openingsanimatie
   scripts/journey.ts    scroll-reis: scrollpositie → tijd, reveals, voortgangsbalk

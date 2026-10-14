@@ -66,6 +66,7 @@ const labels = [0, 3, 6, 9, 12, 15, 18, 21].map((h) => {
       aria-valuetext="00:00"
       data-dial-handle
     >
+      <span class="dial__ripple" aria-hidden="true"></span>
       <span class="dial__knob"></span>
     </div>
   </div>
@@ -166,12 +167,36 @@ const labels = [0, 3, 6, 9, 12, 15, 18, 21].map((h) => {
     box-shadow:
       0 0 0 6px color-mix(in oklab, var(--accent) 35%, transparent),
       0 0 32px 6px color-mix(in oklab, var(--accent) 55%, transparent);
-    transition: transform var(--duration-micro) var(--ease-out);
+    /* Individual properties, so they stack with the hint's GSAP wiggle
+       (transform) and the magnetic lean (translate, from dial-feel.ts). */
+    transition: scale 360ms cubic-bezier(0.34, 1.56, 0.64, 1);
   }
 
   .dial__handle:hover .dial__knob,
   .dial__handle:focus-visible .dial__knob {
-    transform: scale(1.15);
+    scale: 1.15;
+  }
+
+  /* Pressed: the knob gives a little under your finger, and springs back. */
+  :global(.dial[data-pressed]) .dial__knob {
+    scale: 0.86;
+    transition-duration: 120ms;
+  }
+
+  /* Sent out once when the knob settles on a quarter hour (dial-feel.ts). */
+  .dial__ripple {
+    width: 22px;
+    height: 22px;
+    border-radius: 50%;
+    border: 1.5px solid var(--accent);
+    opacity: 0;
+    pointer-events: none;
+  }
+
+  /* Knob and ripple share the handle's one grid cell. */
+  .dial__ripple,
+  .dial__knob {
+    grid-area: 1 / 1;
   }
 
   .dial__center {

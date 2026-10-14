@@ -56,7 +56,7 @@ Everything between today's prototype and an Awwwards submission. Ordered by prio
 - [ ] **P1** Moodboard and final art direction: lock fonts, colour keyframes and imagery style
 - [ ] **P1** Illustration of the body that changes per phase (Rive or a shader-based abstract figure): sleeping, waking, focused, sluggish, active, winding down
 - [ ] **P1** Fine-tune the 24-hour palette on real screens (OLED phone, laptop, external monitor)
-- [ ] **P1** Micro-interactions: dial hover state, magnetic knob, haptic-feeling snap
+- [x] **P1** Micro-interactions: ticks light up around the knob, an hour detent flash, magnetic knob, press squash and settle ripple, sliding chronotype thumb, needle pop and a faint vibration per hour on phones
 - [ ] **P2** Custom cursor that shows the time when hovering over the dial
 - [ ] **P2** Phase transition effect in the shader (a soft "pulse" when crossing into a new phase)
 
